@@ -7,7 +7,7 @@ const FeaturedAuctions = () => {
   return (
     <>
       <section className="my-8">
-        <h3 className="text-[#111] text-xl font-semibold mb-2 min-[480px]:text-xl md:text-2xl lg:text-3xl">
+        <h3 className="text-[#111] text-3xl font-bold mb-8 text-left">
           Featured Auctions
         </h3>
         <div className="flex flex-wrap gap-6">
@@ -20,6 +20,7 @@ const FeaturedAuctions = () => {
                 endTime={element.endTime}
                 startingBid={element.startingBid}
                 id={element._id}
+                bids={element.bids}
                 key={element._id}
               />
             );

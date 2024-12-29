@@ -8,6 +8,12 @@ import {
   getPaymentProofDetail,
   monthlyRevenue,
   updateProofStatus,
+  fetchAllUserDetails,
+  fetchAllCategorySuggestions,
+  approveCategorySuggestion,
+  rejectCategorySuggestion,
+  getAllReportedAuctions,
+  updateReportStatus,
 } from "../controllers/superAdminController.js";
 
 const router = express.Router();
@@ -59,6 +65,48 @@ router.get(
   isAuthenticated,
   isAuthorized("Super Admin"),
   monthlyRevenue
+);
+
+router.get(
+  "/users/details",
+  isAuthenticated,
+  isAuthorized("Super Admin"),
+  fetchAllUserDetails
+);
+
+router.get(
+  "/category/suggestions",
+  isAuthenticated,
+  isAuthorized("Super Admin"),
+  fetchAllCategorySuggestions
+);
+
+router.put(
+  "/category/suggestions/approve/:id",
+  isAuthenticated,
+  isAuthorized("Super Admin"),
+  approveCategorySuggestion
+);
+
+router.put(
+  "/category/suggestions/reject/:id",
+  isAuthenticated,
+  isAuthorized("Super Admin"),
+  rejectCategorySuggestion
+);
+
+router.get(
+  "/reported-auctions",
+  isAuthenticated,
+  isAuthorized("Super Admin"),
+  getAllReportedAuctions
+);
+
+router.put(
+  "/reports/:id/status", 
+  isAuthenticated,
+  isAuthorized("Super Admin"),
+  updateReportStatus
 );
 
 export default router;

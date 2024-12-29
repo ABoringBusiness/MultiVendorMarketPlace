@@ -75,7 +75,16 @@ const auctionSlice = createSlice({
     republishItemFailed(state, action) {
       state.loading = false;
     },
-
+    preventSnipingRequest(state, action) {
+      state.loading = true;
+    },
+    preventSnipingSuccess(state, action) {
+      state.loading = false;
+      state.auctionDetail = action.payload;
+    },
+    preventSnipingFailed(state, action) {
+      state.loading = false;
+    },
     resetSlice(state, action) {
       state.loading = false;
       state.auctionDetail = state.auctionDetail;
@@ -204,4 +213,20 @@ export const deleteAuction = (id) => async (dispatch) => {
   }
 };
 
+export const preventAuctionSniping = (auctionId) => async (dispatch) => {
+  dispatch(auctionSlice.actions.preventSnipingRequest());
+  try {
+    const response = await axios.put(
+      `http://localhost:5000/api/v1/auctionitem/auction/prevent-sniping/${auctionId}`,
+      { withCredentials: true }
+    );
+    dispatch(auctionSlice.actions.preventSnipingSuccess(response.data.auctionItem));
+    toast.success(response.data.message);
+  } catch (error) {
+    dispatch(auctionSlice.actions.preventSnipingFailed());
+    toast.error(error.response?.data?.message || "Failed to prevent sniping.");
+  }
+};
+
 export default auctionSlice.reducer;
+ 

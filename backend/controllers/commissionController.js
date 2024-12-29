@@ -11,7 +11,7 @@ export const calculateCommission = async (auctionId) => {
   if (!mongoose.Types.ObjectId.isValid(auctionId)) {
     return next(new ErrorHandler("Invalid Auction Id format.", 400));
   }
-  const commissionRate = 0.05;
+  const commissionRate = 0.01;
   const commission = auction.currentBid * commissionRate;
   return commission;
 };

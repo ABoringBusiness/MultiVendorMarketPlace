@@ -5,6 +5,7 @@ import {
   getMyAuctionItems,
   removeFromAuction,
   republishItem,
+  preventAuctionSniping, 
 } from "../controllers/auctionItemController.js";
 import { isAuthenticated, isAuthorized } from "../middlewares/auth.js";
 import express from "express";
@@ -43,6 +44,12 @@ router.put(
   isAuthenticated,
   isAuthorized("Auctioneer"),
   republishItem
+); 
+
+router.put(
+  "/auction/prevent-sniping/:id",
+  isAuthenticated,
+  preventAuctionSniping
 );
 
 export default router;

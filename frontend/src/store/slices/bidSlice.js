@@ -37,4 +37,4 @@ export const placeBid = (id, data) => async (dispatch) => {
   }
 };
 
-export default bidSlice.reducer
+export default bidSlice.reducer;

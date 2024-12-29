@@ -33,11 +33,12 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
   };
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setTimeLeft(calculateTimeLeft());
-    });
+    }, 1000);
     return () => clearTimeout(timer);
   }, [timeLeft]);
 
@@ -49,63 +50,89 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
   const dispatch = useDispatch();
   const handleDeleteAuction = () => {
     dispatch(deleteAuction(id));
+    setShowDeleteModal(false); // Close modal after deletion
   };
 
   const [openDrawer, setOpenDrawer] = useState(false);
 
   return (
     <>
-      <div className="basis-full bg-white rounded-md group sm:basis-56 lg:basis-60 2xl:basis-80">
+      <div className="bg-gray-100 rounded-lg shadow-lg flex flex-row overflow-hidden w-full max-w-full border border-gray-200">
+        {/* Image Section */}
         <img
           src={imgSrc}
           alt={title}
-          className="w-full aspect-[4/3] m-auto md:p-12"
+          className="w-32 h-32 object-cover flex-shrink-0 p-4"
         />
-        <div className="px-2 pt-4 pb-2">
-          <h5 className="font-semibold text-[18px] group-hover:text-[#d6482b] mb-2">
-            {title}
-          </h5>
-          {startingBid && (
-            <p className="text-stone-600 font-light">
-              Starting Bid:{" "}
-              <span className="text-[#fdba88] font-bold ml-1">
-                {startingBid}
-              </span>
-            </p>
-          )}
-          <p className="text-stone-600 font-light">
-            {timeLeft.type}
-            {Object.keys(timeLeft).length > 1 ? (
-              <span className="text-[#fdba88] font-bold ml-1">
-                {formatTimeLeft(timeLeft)}
-              </span>
-            ) : (
-              <span className="text-[#fdba88] font-bold ml-1">Time's up!</span>
+        {/* Details Section */}
+        <div className="flex flex-col justify-between p-4 flex-grow">
+          <div>
+            <h5 className="font-semibold text-xl text-gray-900 mb-2">{title}</h5>
+            {startingBid && (
+              <p className="text-gray-700 font-medium text-md mb-1">
+                Starting Bid: <span className="text-red-500">Rs {startingBid}</span>
+              </p>
             )}
-          </p>
-          <div className="flex flex-col gap-2 mt-4">
-            <Link
-              className="bg-stone-700 text-center text-white text-xl px-4 py-2 rounded-md transition-all duration-300 hover:bg-black"
-              to={`/auction/details/${id}`}
-            >
-              View Auction
-            </Link>
-            <button
-              className="bg-red-400 text-center text-white text-xl px-4 py-2 rounded-md transition-all duration-300 hover:bg-red-600"
-              onClick={handleDeleteAuction}
-            >
-              Delete Auction
-            </button>
-            <button
-              disabled={new Date(endTime) > Date.now()}
-              onClick={() => setOpenDrawer(true)}
-              className="bg-sky-400 text-center text-white text-xl px-4 py-2 rounded-md transition-all duration-300 hover:bg-sky-700"
-            >
-              Republish Auction
-            </button>
+            <p className="text-gray-600 font-light text-md mb-2">
+              {timeLeft.type}
+              {Object.keys(timeLeft).length > 1 ? (
+                <span className="text-red-500 font-bold ml-1">
+                  {formatTimeLeft(timeLeft)}
+                </span>
+              ) : (
+                <span className="text-red-500 font-bold ml-1">Time's up!</span>
+              )}
+            </p>
           </div>
         </div>
+        {/* Buttons Section */}
+        <div className="flex flex-row justify-center items-center gap-3 p-4">
+          <Link
+            className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md text-center transition-all duration-300"
+            to={`/auction/details/${id}`}
+          >
+            View Auction
+          </Link>
+          <button
+            className="bg-green-500 text-white text-sm px-4 py-2 rounded-md transition-all duration-300 disabled:bg-gray-400"
+            disabled={new Date(endTime) > Date.now()}
+            onClick={() => setOpenDrawer(true)}
+          >
+            Republish Auction
+          </button>
+          <button
+            className="bg-red-500 text-white text-sm px-4 py-2 rounded-md transition-all duration-300"
+            onClick={() => setShowDeleteModal(true)}
+          >
+            Delete Auction
+          </button>
+        </div>
       </div>
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg w-full max-w-sm p-6 shadow-lg">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Confirm Deletion</h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this auction?
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-md transition-all duration-200 hover:bg-gray-400"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-red-600 text-white px-4 py-2 rounded-md transition-all duration-200 hover:bg-red-700"
+                onClick={handleDeleteAuction}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Drawer id={id} openDrawer={openDrawer} setOpenDrawer={setOpenDrawer} />
     </>
   );
@@ -117,8 +144,8 @@ const Drawer = ({ setOpenDrawer, openDrawer, id }) => {
   const dispatch = useDispatch();
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const {loading} = useSelector(state => state.auction);
-  const handleRepbulishAuction = () => {
+  const { loading } = useSelector((state) => state.auction);
+  const handleRepublishAuction = () => {
     const formData = new FormData();
     formData.append("startTime", startTime);
     formData.append("endTime", endTime);
@@ -129,66 +156,55 @@ const Drawer = ({ setOpenDrawer, openDrawer, id }) => {
     <section
       className={`fixed ${
         openDrawer && id ? "bottom-0" : "-bottom-full"
-      }  left-0 w-full transition-all duration-300 h-full bg-[#00000087] flex items-end`}
+      } left-0 w-full transition-all duration-300 h-full bg-black bg-opacity-75 flex items-end`}
     >
-      <div className="bg-white h-fit transition-all duration-300 w-full">
-        <div className="w-full px-5 py-8 sm:max-w-[640px] sm:m-auto">
-          <h3 className="text-[#D6482B]  text-3xl font-semibold text-center mb-1">
-            Republish Auction
-          </h3>
-          <p className="text-stone-600">
-            Let's republish auction with same details but new starting and
-            ending time.
-          </p>
-          <form className="flex flex-col gap-5 my-5">
-            <div className="flex flex-col gap-3">
-              <label className="text-[16px] text-stone-600">
-                Republish Auction Start Time
-              </label>
-              <DatePicker
-                selected={startTime}
-                onChange={(date) => setStartTime(date)}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat={"MMMM d, yyyy h,mm aa"}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none w-full"
-              />
-            </div>
-            <div className="flex flex-col gap-3">
-              <label className="text-[16px] text-stone-600">
-                Republish Auction End Time
-              </label>
-              <DatePicker
-                selected={endTime}
-                onChange={(date) => setEndTime(date)}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat={"MMMM d, yyyy h,mm aa"}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none w-full"
-              />
-            </div>
-            <div>
-              <button
-                type="button"
-                className="bg-blue-500 flex justify-center w-full py-2 rounded-md text-white font-semibold text-xl transition-all duration-300 hover:bg-blue-700"
-                onClick={handleRepbulishAuction}
-              >
-                {loading ? "Republishing" : "Republish"} 
-              </button>
-            </div>
-            <div>
-              <button
-                type="button"
-                className="bg-yellow-500 flex justify-center w-full py-2 rounded-md text-white font-semibold text-xl transition-all duration-300 hover:bg-yellow-700"
-                onClick={() => setOpenDrawer(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+      <div className="bg-white w-full sm:max-w-lg mx-auto p-8 rounded-t-2xl shadow-xl">
+        <h3 className="text-red-500 text-3xl font-semibold text-center mb-4">
+          Republish Auction
+        </h3>
+        <p className="text-gray-600 mb-6 text-center">
+          Set new starting and ending time for your auction.
+        </p>
+        <form className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <label className="text-lg text-gray-700">Republish Auction Start Time</label>
+            <DatePicker
+              selected={startTime}
+              onChange={(date) => setStartTime(date)}
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              dateFormat="MMMM d, yyyy h:mm aa"
+              className="text-lg py-2 px-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-lg text-gray-700">Republish Auction End Time</label>
+            <DatePicker
+              selected={endTime}
+              onChange={(date) => setEndTime(date)}
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              dateFormat="MMMM d, yyyy h:mm aa"
+              className="text-lg py-2 px-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            type="button"
+            className="bg-blue-600 w-full py-3 rounded-md text-white font-semibold text-xl transition-all duration-300"
+            onClick={handleRepublishAuction}
+          >
+            {loading ? "Republishing..." : "Republish"}
+          </button>
+          <button
+            type="button"
+            className="bg-yellow-500 w-full py-3 rounded-md text-white font-semibold text-xl transition-all duration-300"
+            onClick={() => setOpenDrawer(false)}
+          >
+            Cancel
+          </button>
+        </form>
       </div>
     </section>
   );

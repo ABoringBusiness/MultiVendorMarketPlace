@@ -1,198 +1,206 @@
-import React, { useState } from "react";
-import { RiAuctionFill } from "react-icons/ri";
-import { MdLeaderboard, MdDashboard } from "react-icons/md";
-import { SiGooglesearchconsole } from "react-icons/si";
-import { BsFillInfoSquareFill } from "react-icons/bs";
-import { FaFacebook } from "react-icons/fa";
-import { RiInstagramFill } from "react-icons/ri";
-import { GiHamburgerMenu } from "react-icons/gi";
-import { IoMdCloseCircleOutline, IoIosCreate } from "react-icons/io";
-import { FaUserCircle } from "react-icons/fa";
-import { FaFileInvoiceDollar } from "react-icons/fa6";
-import { FaEye } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/slices/userSlice";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const SideDrawer = () => {
   const [show, setShow] = useState(false);
-
+  const [scrollDirection, setScrollDirection] = useState("up");
   const { isAuthenticated, user } = useSelector((state) => state.user);
+  const location = useLocation();
 
   const dispatch = useDispatch();
   const handleLogout = () => {
     dispatch(logout());
   };
 
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const handleScroll = () => {
+      if (window.scrollY > lastScrollY) {
+        setScrollDirection("down");
+      } else {
+        setScrollDirection("up");
+      }
+      lastScrollY = window.scrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isActive = (path) => location.pathname === path;
+
   return (
     <>
+      {/* Hamburger Menu Icon for Mobile View */}
       <div
         onClick={() => setShow(!show)}
-        className="fixed right-5 top-5 bg-[#D6482B] text-white text-3xl p-2 rounded-md hover:bg-[#b8381e] lg:hidden"
+        className="fixed right-5 top-5 bg-[#D6482B] text-white text-3xl p-3 rounded-md hover:bg-[#b8381e] lg:hidden z-50 cursor-pointer"
       >
-        <GiHamburgerMenu />
+        {show ? "✖" : "☰"}
       </div>
-      <div
-        className={`w-[100%] sm:w-[300px] bg-[#f6f4f0] h-full fixed top-0 ${
-          show ? "left-0" : "left-[-100%]"
-        } transition-all duration-100 p-4 flex flex-col justify-between lg:left-0 border-r-[1px] border-r-stone-500`}
+
+      <header
+        className={`w-full bg-white h-[100px] fixed top-0 left-0 z-40 flex items-center justify-between px-8 lg:px-12 transition-transform duration-300 ${
+          scrollDirection === "down" ? "-translate-y-full" : "translate-y-0"
+        }`}
       >
-        <div className="relative">
-          <Link to={"/"}>
-            <h4 className="text-2xl font-semibold mb-4">
-              Prime<span className="text-[#D6482b]">Bid</span>
-            </h4>
-          </Link>
-          <ul className="flex flex-col gap-3">
-            <li>
+        {/* Logo */}
+        <Link to={"/"} className="text-2xl font-semibold">
+          Nelami<span className="text-[#D6482b]">Ghar</span>
+        </Link>
+
+        {/* Navigation Links */}
+        <nav
+          className={`${
+            show ? "flex" : "hidden"
+          } lg:flex flex-col lg:flex-row lg:gap-6 absolute lg:static top-[100px] right-0 w-full lg:w-auto bg-white lg:bg-transparent lg:h-auto transition-all duration-300 p-4 lg:p-0 lg:ml-auto`}
+        >
+          <ul className="flex flex-col lg:flex-row lg:gap-6 mb-4 lg:mb-0">
+            {/* Public Links */}
+            <li className="mb-4 lg:mb-0">
               <Link
-                to={"/auctions"}
-                className="flex text-xl font-semibold gap-2 items-center hover:text-[#D6482b] hover:transition-all hover:duration-150"
+                to={"/"}
+                className={`text-md font-medium hover:text-[#D6482b] ${
+                  isActive("/") ? "text-[#D6482b] underline" : ""
+                }`}
               >
-                <RiAuctionFill /> Auctions
+                Home
               </Link>
             </li>
-            <li>
+            <li className="mb-4 lg:mb-0">
+              <Link
+                to={"/auctions"}
+                className={`text-md font-medium hover:text-[#D6482b] ${
+                  isActive("/auctions") ? "text-[#D6482b] underline" : ""
+                }`}
+              >
+                Auctions
+              </Link>
+            </li>
+            <li className="mb-4 lg:mb-0">
               <Link
                 to={"/leaderboard"}
-                className="flex text-xl font-semibold gap-2 items-center hover:text-[#D6482b] hover:transition-all hover:duration-150"
+                className={`text-md font-medium hover:text-[#D6482b] ${
+                  isActive("/leaderboard") ? "text-[#D6482b] underline" : ""
+                }`}
               >
-                <MdLeaderboard /> Leaderboard
+                Leaderboard
               </Link>
             </li>
             {isAuthenticated && user && user.role === "Auctioneer" && (
               <>
-                <li>
+                <li className="mb-4 lg:mb-0">
                   <Link
                     to={"/submit-commission"}
-                    className="flex text-xl font-semibold gap-2 items-center hover:text-[#D6482b] hover:transition-all hover:duration-150"
+                    className={`text-md font-medium hover:text-[#D6482b] ${
+                      isActive("/submit-commission")
+                        ? "text-[#D6482b] underline"
+                        : ""
+                    }`}
                   >
-                    <FaFileInvoiceDollar /> Submit Commission
+                    Submit Commission
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    to={"/create-auction"}
-                    className="flex text-xl font-semibold gap-2 items-center hover:text-[#D6482b] hover:transition-all hover:duration-150"
-                  >
-                    <IoIosCreate /> Create Auction
-                  </Link>
-                </li>
-                <li>
+                <li className="mb-4 lg:mb-0">
                   <Link
                     to={"/view-my-auctions"}
-                    className="flex text-xl font-semibold gap-2 items-center hover:text-[#D6482b] hover:transition-all hover:duration-150"
+                    className={`text-md font-medium hover:text-[#D6482b] ${
+                      isActive("/view-my-auctions")
+                        ? "text-[#D6482b] underline"
+                        : ""
+                    }`}
                   >
-                    <FaEye /> View My Auctions
+                    Manage Auctions
                   </Link>
                 </li>
               </>
             )}
             {isAuthenticated && user && user.role === "Super Admin" && (
-              <li>
+              <>
+                <li className="mb-4 lg:mb-0">
+                  <Link
+                    to={"/dashboard"}
+                    className={`text-md font-medium mr-4 hover:text-[#D6482b] ${
+                      isActive("/dashboard")
+                        ? "text-[#D6482b] underline"
+                        : ""
+                    }`}
+                  >
+                   Admin Dashboard
+                  </Link>
+                </li>
+              </>
+            )}
+            {isAuthenticated && user.role === "Bidder" && (
+              <li className="mb-4 lg:mb-0">
                 <Link
-                  to={"/dashboard"}
-                  className="flex text-xl font-semibold gap-2 items-center hover:text-[#D6482b] hover:transition-all hover:duration-150"
+                  to={"/wishlist"}
+                  className={`text-md mr-3 font-medium hover:text-[#D6482b] ${
+                    isActive("/wishlist") ? "text-[#D6482b] underline" : ""
+                  }`}
                 >
-                  <MdDashboard /> Dashboard
+                  Wishlist
                 </Link>
               </li>
             )}
           </ul>
-          {!isAuthenticated ? (
-            <>
-              <div className="my-4 flex gap-2">
-                <Link
-                  to={"/sign-up"}
-                  className="bg-[#D6482B] font-semibold hover:bg-[#b8381e] text-xl py-1 px-4 rounded-md text-white"
-                >
-                  Sign Up
-                </Link>
-                <Link
-                  to={"/login"}
-                  className="text-[#DECCBE] bg-transparent border-[#DECCBE] border-2 hover:bg-[#fffefd] hover:text-[#fdba88] font-bold text-xl py-1 px-4 rounded-md"
-                >
-                  Login
-                </Link>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="my-4 flex gap-4 w-fit" onClick={handleLogout}>
-                <button className="bg-[#D6482B] font-semibold hover:bg-[#b8381e] text-xl py-1 px-4 rounded-md text-white">
-                  Logout
-                </button>
-              </div>
-            </>
-          )}
-          <hr className="mb-4 border-t-[#d6482b]" />
-          <ul className="flex flex-col gap-3">
-            {isAuthenticated && (
-              <li>
-                <Link
-                  to={"/me"}
-                  className="flex text-xl font-semibold gap-2 items-center hover:text-[#D6482b] hover:transition-all hover:duration-150"
-                >
-                  <FaUserCircle /> Profile
-                </Link>
-              </li>
-            )}
-            <li>
-              <Link
-                to={"/how-it-works-info"}
-                className="flex text-xl font-semibold gap-2 items-center hover:text-[#D6482b] hover:transition-all hover:duration-150"
-              >
-                <SiGooglesearchconsole /> How it works
-              </Link>
-            </li>
-            <li>
-              <Link
-                to={"/about"}
-                className="flex text-xl font-semibold gap-2 items-center hover:text-[#D6482b] hover:transition-all hover:duration-150"
-              >
-                <BsFillInfoSquareFill /> About Us
-              </Link>
-            </li>
-          </ul>
-          <IoMdCloseCircleOutline
-            onClick={() => setShow(!show)}
-            className="absolute top-0 right-4 text-[28px] sm:hidden"
-          />
-        </div>
+        </nav>
 
-        <div>
-          <div className="flex gap-2 items-center mb-2">
+        {/* Profile Icon and Special Actions */}
+        {isAuthenticated && (
+          <div className="flex items-center gap-4">
+            {user?.role === "Auctioneer" && (
+              <Link
+                to={"/create-auction"}
+                className={`ml-4 bg-[#D6482B] text-white px-4 py-2 rounded-md font-medium hover:bg-[#b8381e] ${
+                  isActive("/create-auction") ? "bg-[#b8381e]" : ""
+                }`}
+              >
+                Create Auction
+              </Link>
+            )}
             <Link
-              to="/"
-              className="bg-white text-stone-500 p-2 text-xl rounded-sm hover:text-blue-700"
+              to={"/me"}
+              className="w-[40px] h-[40px] bg-[#D6482B] text-white flex items-center justify-center rounded-full hover:bg-[#b8381e]"
             >
-              <FaFacebook />
-            </Link>
-            <Link
-              to="/"
-              className="bg-white text-stone-500 p-2 text-xl rounded-sm hover:text-pink-500"
-            >
-              <RiInstagramFill />
+              <span className="text-xl">👤</span>
             </Link>
           </div>
-          <Link
-            to={"/contact"}
-            className="text-stone-500 font-semibold hover:text-[#d6482b] hover:transition-all hover:duration-150"
-          >
-            Contact Us
-          </Link>
-          <p className="text-stone-500">&copy; PrimeBid, LLC.</p>
-          <p className="text-stone-500">
-            Degined By{" "}
+        )}
+
+        {/* Authentication Links */}
+        <nav className="flex items-center gap-4 ml-4">
+          {!isAuthenticated ? (
+            <>
+              <Link
+                to={"/login"}
+                className={`text-md font-medium text-[#D6482B] hover:underline ${
+                  isActive("/login") ? "text-[#b8381e]" : ""
+                }`}
+              >
+                🔑 Login
+              </Link>
+              <Link
+                to={"/sign-up"}
+                className={`text-md font-medium text-[#D6482B] hover:underline ${
+                  isActive("/sign-up") ? "text-[#b8381e]" : ""
+                }`}
+              >
+                Sign Up
+              </Link>
+            </>
+          ) : (
             <Link
-              to={"/"}
-              className="font-semibold hover:text-[#d6482b] hover:transition-all hover:duration-150"
+              onClick={handleLogout}
+              className="text-md font-medium text-[#D6482B] hover:underline cursor-pointer"
             >
-              CodeWithZeeshu
+              🚪 Logout
             </Link>
-          </p>
-        </div>
-      </div>
+          )}
+        </nav>
+      </header>
     </>
   );
 };

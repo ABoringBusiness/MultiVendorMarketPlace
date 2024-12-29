@@ -54,13 +54,17 @@ export const addNewAuctionItem = catchAsyncErrors(async (req, res, next) => {
       )
     );
   }
-  const alreadyOneAuctionActive = await Auction.find({
+
+  // Check if the auctioneer already has three active auctions
+  const activeAuctionsCount = await Auction.countDocuments({
     createdBy: req.user._id,
     endTime: { $gt: Date.now() },
   });
-  if (alreadyOneAuctionActive.length > 0) {
-    return next(new ErrorHandler("You already have one active auction.", 400));
+
+  if (activeAuctionsCount >= 3) {
+    return next(new ErrorHandler("You can only have up to 3 active auctions.", 400));
   }
+
   try {
     const cloudinaryResponse = await cloudinary.uploader.upload(
       image.tempFilePath,
@@ -98,7 +102,7 @@ export const addNewAuctionItem = catchAsyncErrors(async (req, res, next) => {
     });
   } catch (error) {
     return next(
-      new ErrorHandler(error.message || "Failed to created auction.", 500)
+      new ErrorHandler(error.message || "Failed to create auction.", 500)
     );
   }
 });
@@ -116,7 +120,12 @@ export const getAuctionDetails = catchAsyncErrors(async (req, res, next) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return next(new ErrorHandler("Invalid Id format.", 400));
   }
-  const auctionItem = await Auction.findById(id);
+
+  const auctionItem = await Auction.findById(id).populate({
+    path: 'createdBy',
+    select: 'userName address phone',
+  });
+
   if (!auctionItem) {
     return next(new ErrorHandler("Auction not found.", 404));
   }
@@ -224,4 +233,37 @@ export const republishItem = catchAsyncErrors(async (req, res, next) => {
     message: `Auction republished and will be active on ${req.body.startTime}`,
     createdBy,
   });
+});
+
+export const preventAuctionSniping = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new ErrorHandler("Invalid Id format.", 400));
+  }
+  const auctionItem = await Auction.findById(id);
+  if (!auctionItem) {
+    return next(new ErrorHandler("Auction not found.", 404));
+  }
+
+  const timeLeft = new Date(auctionItem.endTime) - Date.now();
+  const fiveMinutes = 5 * 60 * 1000;
+  const thirtyMinutes = 30 * 60 * 1000;
+
+  if (timeLeft <= fiveMinutes) {
+    auctionItem.endTime = new Date(auctionItem.endTime.getTime() + thirtyMinutes);
+    await auctionItem.save();
+    console.log("Auction end time extended by 30 minutes.");
+    return res.status(200).json({
+      success: true,
+      message: "Auction end time extended by 30 minutes to prevent sniping.",
+      auctionItem,
+    });
+  } else {
+    console.log("No extension needed.");
+    return res.status(200).json({
+      success: true,
+      message: "No extension needed.",
+      auctionItem,
+    });
+  }
 });

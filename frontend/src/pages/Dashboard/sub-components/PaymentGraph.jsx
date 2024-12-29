@@ -11,7 +11,6 @@ import {
   PointElement,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { useSelector } from "react-redux";
 
 ChartJS.register(
   CategoryScale,
@@ -25,8 +24,7 @@ ChartJS.register(
 );
 
 const PaymentGraph = () => {
-  const { monthlyRevenue } = useSelector((state) => state.superAdmin);
-
+  // Placeholder data with varying values for each month
   const data = {
     labels: [
       "January",
@@ -45,7 +43,20 @@ const PaymentGraph = () => {
     datasets: [
       {
         label: "Total Payment Received",
-        data: monthlyRevenue,
+        data: [
+          10000,
+          20000,
+          15000,
+          30000,
+          25000,
+          40000,
+          35000,
+          45000,
+          20000,
+          30000,
+          50000,
+          25000,
+        ],
         backgroundColor: "#D6482B",
       },
     ],
@@ -55,7 +66,7 @@ const PaymentGraph = () => {
     scales: {
       y: {
         beginAtZero: true,
-        max: 5000,
+        max: 50000,
         ticks: {
           callback: function (value) {
             return value.toLocaleString();

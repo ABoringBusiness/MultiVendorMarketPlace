@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import FeaturedAuctions from "./home-sub-components/FeaturedAuctions";
 import UpcomingAuctions from "./home-sub-components/UpcomingAuctions";
+import EndingSoonAuctions from "./home-sub-components/EndingSoonAuctions";
 import Leaderboard from "./home-sub-components/Leaderboard";
 import Spinner from "@/custom-components/Spinner";
 
@@ -16,14 +17,14 @@ const Home = () => {
     },
     {
       title: "Payment & Fees",
-      description: "Bidder pays; auctioneer pays 5% fee.",
+      description: "Bidder pays; auctioneer pays 1% fee.",
     },
   ];
 
   const { isAuthenticated } = useSelector((state) => state.user);
   return (
     <>
-      <section className="w-full ml-0 m-0 h-fit px-5 pt-20 lg:pl-[320px] flex flex-col min-h-screen py-4 justify-center">
+      <section className="w-full h-fit px-5 pt-[150px] lg:px-[30px] flex flex-col min-h-screen py-4 justify-center bg-[url('/path/to/your/background-image.jpg')] bg-cover bg-center">
         <div>
           <p className="text-[#DECCBE] font-bold text-xl mb-8">
             Transparency Leads to Your Victory
@@ -34,7 +35,7 @@ const Home = () => {
             Transparent Auctions
           </h1>
           <h1
-            className={`text-[#d6482b] text-2xl font-bold mb-2 min-[480px]:text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl`}
+            className={`text-[#d6482b] text-2xl font-bold mb-4 min-[480px]:text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl`}
           >
             Be The Winner
           </h1>
@@ -49,7 +50,7 @@ const Home = () => {
                 </Link>
                 <Link
                   to={"/login"}
-                  className="text-[#DECCBE] bg-transparent border-2 border-[#DECCBE] hover:bg-[#fff3fd] hover:text-[#fdba88] font-bold text-xl  rounded-md px-8 flex items-center py-2 transition-all duration-300"
+                  className="text-[#d6482b] bg-transparent border-2 border-[#d6482b] hover:bg-[#d6482b] hover:text-white font-bold text-xl rounded-md px-8 flex items-center py-2 transition-all duration-300"
                 >
                   Login
                 </Link>
@@ -75,6 +76,7 @@ const Home = () => {
         </div>
         <FeaturedAuctions />
         <UpcomingAuctions />
+        <EndingSoonAuctions />
         <Leaderboard />
       </section>
     </>

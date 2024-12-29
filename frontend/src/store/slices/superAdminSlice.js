@@ -12,9 +12,11 @@ const superAdminSlice = createSlice({
     totalBidders: [],
     paymentProofs: [],
     singlePaymentProof: {},
+    users: [],
+    reports: [],
   },
   reducers: {
-    requestForMonthlyRevenue(state, action) {
+    requestForMonthlyRevenue(state) {
       state.loading = true;
       state.monthlyRevenue = [];
     },
@@ -22,11 +24,11 @@ const superAdminSlice = createSlice({
       state.loading = false;
       state.monthlyRevenue = action.payload;
     },
-    failedForMonthlyRevenue(state, action) {
+    failedForMonthlyRevenue(state) {
       state.loading = false;
       state.monthlyRevenue = [];
     },
-    requestForAllUsers(state, action) {
+    requestForAllUsers(state) {
       state.loading = true;
       state.totalAuctioneers = [];
       state.totalBidders = [];
@@ -36,12 +38,12 @@ const superAdminSlice = createSlice({
       state.totalAuctioneers = action.payload.auctioneersArray;
       state.totalBidders = action.payload.biddersArray;
     },
-    failureForAllUsers(state, action) {
+    failureForAllUsers(state) {
       state.loading = false;
       state.totalAuctioneers = [];
       state.totalBidders = [];
     },
-    requestForPaymentProofs(state, action) {
+    requestForPaymentProofs(state) {
       state.loading = true;
       state.paymentProofs = [];
     },
@@ -49,20 +51,20 @@ const superAdminSlice = createSlice({
       state.loading = false;
       state.paymentProofs = action.payload;
     },
-    failureForPaymentProofs(state, action) {
+    failureForPaymentProofs(state) {
       state.loading = false;
       state.paymentProofs = [];
     },
-    requestForDeletePaymentProof(state, action) {
+    requestForDeletePaymentProof(state) {
       state.loading = true;
     },
-    successForDeletePaymentProof(state, action) {
+    successForDeletePaymentProof(state) {
       state.loading = false;
     },
-    failureForDeletePaymentProof(state, action) {
+    failureForDeletePaymentProof(state) {
       state.loading = false;
     },
-    requestForSinglePaymentProofDetail(state, action) {
+    requestForSinglePaymentProofDetail(state) {
       state.loading = true;
       state.singlePaymentProof = {};
     },
@@ -70,29 +72,44 @@ const superAdminSlice = createSlice({
       state.loading = false;
       state.singlePaymentProof = action.payload;
     },
-    failureForSinglePaymentProofDetail(state, action) {
+    failureForSinglePaymentProofDetail(state) {
       state.loading = false;
       state.singlePaymentProof = {};
     },
-    requestForUpdatePaymentProof(state, action) {
+    requestForUpdatePaymentProof(state) {
       state.loading = true;
     },
-    successForUpdatePaymentProof(state, action) {
+    successForUpdatePaymentProof(state) {
       state.loading = false;
     },
-    failureForUpdatePaymentProof(state, action) {
+    failureForUpdatePaymentProof(state) {
       state.loading = false;
     },
-    requestForAuctionItemDelete(state, action) {
+    requestForAuctionItemDelete(state) {
       state.loading = true;
     },
-    successForAuctionItemDelete(state, action) {
+    successForAuctionItemDelete(state) {
       state.loading = false;
     },
-    failureForAuctionItemDelete(state, action) {
+    failureForAuctionItemDelete(state) {
       state.loading = false;
     },
-    clearAllErrors(state, action) {
+    requestForReports(state) {
+      state.loading = true;
+      state.reports = [];
+    },
+    successForReports(state, action) {
+      state.loading = false;
+      state.reports = action.payload;
+    },
+    failureForReports(state) {
+      state.loading = false;
+      state.reports = [];
+    }, successForAllUsers(state, action) {
+      state.loading = false;
+      state.users = action.payload;
+    },
+    clearAllErrors(state) {
       state.loading = false;
       state.monthlyRevenue = state.monthlyRevenue;
       state.paymentProofs = state.paymentProofs;
@@ -117,7 +134,22 @@ export const getMonthlyRevenue = () => async (dispatch) => {
     );
   } catch (error) {
     dispatch(superAdminSlice.actions.failedForMonthlyRevenue());
-    console.error(error.response.data.message);
+    console.error(error.response?.data?.message || "Error fetching revenue");
+  }
+};
+
+export const getAllReports = () => async (dispatch) => {
+  dispatch(superAdminSlice.actions.requestForReports());
+  try {
+    const response = await axios.get(
+      "http://localhost:5000/api/v1/superadmin/reported-auctions",
+      { withCredentials: true }
+    );
+    dispatch(superAdminSlice.actions.successForReports(response.data.reports));
+  } catch (error) {
+    dispatch(superAdminSlice.actions.failureForReports());
+    console.error(error.response?.data?.message || "Failed to fetch reports");
+    toast.error(error.response?.data?.message || "Failed to fetch reports");
   }
 };
 
@@ -131,7 +163,7 @@ export const getAllUsers = () => async (dispatch) => {
     dispatch(superAdminSlice.actions.successForAllUsers(response.data));
   } catch (error) {
     dispatch(superAdminSlice.actions.failureForAllUsers());
-    console.error(error.response.data.message);
+    console.error(error.response?.data?.message || "Error fetching users");
   }
 };
 
@@ -149,7 +181,7 @@ export const getAllPaymentProofs = () => async (dispatch) => {
     );
   } catch (error) {
     dispatch(superAdminSlice.actions.failureForPaymentProofs());
-    console.error(error.response.data.message);
+    console.error(error.response?.data?.message || "Error fetching proofs");
   }
 };
 
@@ -165,8 +197,8 @@ export const deletePaymentProof = (id) => async (dispatch) => {
     toast.success(response.data.message);
   } catch (error) {
     dispatch(superAdminSlice.actions.failureForDeletePaymentProof());
-    console.error(error.response.data.message);
-    toast.error(error.response.data.message);
+    console.error(error.response?.data?.message || "Error deleting proof");
+    toast.error(error.response?.data?.message || "Error deleting proof");
   }
 };
 
@@ -184,7 +216,7 @@ export const getSinglePaymentProofDetail = (id) => async (dispatch) => {
     );
   } catch (error) {
     dispatch(superAdminSlice.actions.failureForSinglePaymentProofDetail());
-    console.error(error.response.data.message);
+    console.error(error.response?.data?.message || "Error fetching proof");
   }
 };
 
@@ -202,8 +234,27 @@ export const updatePaymentProof = (id, status, amount) => async (dispatch) => {
     dispatch(superAdminSlice.actions.clearAllErrors());
   } catch (error) {
     dispatch(superAdminSlice.actions.failureForUpdatePaymentProof());
-    console.error(error.response.data.message);
-    toast.error(error.response.data.message);
+    console.error(error.response?.data?.message || "Error updating proof");
+    toast.error(error.response?.data?.message || "Error updating proof");
+  }
+};
+
+export const getAllUserDetails = () => async (dispatch) => {
+  dispatch(superAdminSlice.actions.requestForAllUsers());
+  try {
+    const response = await axios.get(
+      "http://localhost:5000/api/v1/superadmin/users/details",
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        withCredentials: true,
+      }
+    );
+    dispatch(superAdminSlice.actions.successForAllUsers(response.data.users));
+  } catch (error) {
+    dispatch(superAdminSlice.actions.failureForAllUsers());
+    console.error(error.response?.data?.message || error.message);
   }
 };
 
@@ -219,11 +270,12 @@ export const deleteAuctionItem = (id) => async (dispatch) => {
     dispatch(getAllAuctionItems());
   } catch (error) {
     dispatch(superAdminSlice.actions.failureForAuctionItemDelete());
-    console.error(error.response.data.message);
-    toast.error(error.response.data.message);
+    console.error(error.response?.data?.message || "Error deleting auction");
+    toast.error(error.response?.data?.message || "Error deleting auction");
   }
 };
 
+// Clear Errors Action
 export const clearAllSuperAdminSliceErrors = () => (dispatch) => {
   dispatch(superAdminSlice.actions.clearAllErrors());
 };

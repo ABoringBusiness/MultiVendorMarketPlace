@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 export const connection = () => {
   mongoose
     .connect(process.env.MONGO_URI, {
-      dbName: "MERN_AUCTION_PLATFORM",
+      dbName: "NELAMI-GHAR",
     })
     .then(() => {
       console.log("Connected to database.");
