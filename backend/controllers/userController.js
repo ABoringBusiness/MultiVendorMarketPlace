@@ -125,7 +125,11 @@ export const login = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const getProfile = catchAsyncErrors(async (req, res, next) => {
-  const user = req.user;
+  const user = await UserModel.findById(req.user.id);
+  if (!user) {
+    return next(new ErrorHandler("User not found.", 404));
+  }
+  
   res.status(200).json({
     success: true,
     user,
@@ -138,6 +142,8 @@ export const logout = catchAsyncErrors(async (req, res, next) => {
     .cookie("token", "", {
       expires: new Date(Date.now()),
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
     })
     .json({
       success: true,
@@ -146,8 +152,9 @@ export const logout = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const fetchLeaderboard = catchAsyncErrors(async (req, res, next) => {
-  const users = await User.find({ moneySpent: { $gt: 0 } });
-  const leaderboard = users.sort((a, b) => b.moneySpent - a.moneySpent);
+  const users = await UserModel.findByMoneySpent();
+  const leaderboard = users.sort((a, b) => b.money_spent - a.money_spent);
+  
   res.status(200).json({
     success: true,
     leaderboard,
@@ -161,19 +168,18 @@ export const changePassword = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Please provide both old and new passwords.", 400));
   }
 
-  const user = await User.findById(req.user.id).select("+password");
-
+  const user = await UserModel.findById(req.user.id);
   if (!user) {
     return next(new ErrorHandler("User not found.", 404));
   }
 
-  const isMatch = await user.comparePassword(oldPassword);
+  const isMatch = await bcrypt.compare(oldPassword, user.password);
   if (!isMatch) {
     return next(new ErrorHandler("Incorrect old password.", 400));
   }
 
-  user.password = newPassword; 
-  await user.save({ validateBeforeSave: false });
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await UserModel.update(user.id, { password: hashedPassword });
 
   res.status(200).json({ success: true, message: "Password changed successfully." });
 });
