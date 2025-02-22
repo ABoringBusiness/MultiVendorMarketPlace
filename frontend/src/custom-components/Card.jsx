@@ -34,6 +34,7 @@ const Card = ({ imgSrc, title, startingBid, startTime, endTime, id, bids = [] })
       };
     }
     return timeLeft;
+  }, [startTime, endTime]);
   };
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
