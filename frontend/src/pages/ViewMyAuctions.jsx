@@ -1,7 +1,7 @@
 import CardTwo from "@/custom-components/CardTwo";
 import Spinner from "@/custom-components/Spinner";
 import { getMyAuctionItems, deleteAuction } from "@/store/slices/auctionSlice";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 
