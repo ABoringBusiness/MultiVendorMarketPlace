@@ -391,16 +391,19 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await UserModel.findByEmail(email);
     if (!user) {
       return next(new ErrorHandler('User not found', 404));
     }
 
     const resetToken = crypto.randomBytes(20).toString('hex');
-    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    user.resetPasswordExpires = Date.now() + 30 * 60 * 1000;  
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const resetExpires = new Date(Date.now() + 30 * 60 * 1000);
 
-    await user.save({ validateBeforeSave: false });
+    await UserModel.update(user.id, {
+      reset_password_token: hashedToken,
+      reset_password_expires: resetExpires
+    });
 
     const resetUrl = `http://localhost:5173/password/reset/${resetToken}`;
     const message = `Click the following link to reset your password: \n\n${resetUrl}`;
@@ -413,9 +416,12 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save({ validateBeforeSave: false });
+    if (user) {
+      await UserModel.update(user.id, {
+        reset_password_token: null,
+        reset_password_expires: null
+      });
+    }
 
     return next(new ErrorHandler('Email could not be sent', 500));
   }
@@ -424,25 +430,20 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
 export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   const resetToken = req.params.token;
-
-  // Hash the token and find the user
   const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-  const user = await User.findOne({
-    resetPasswordToken: hashedToken,
-    resetPasswordExpires: { $gt: Date.now() },
-  });
-
-  if (!user) {
+  const user = await UserModel.findByResetToken(hashedToken);
+  if (!user || !user.reset_password_expires || new Date(user.reset_password_expires) < new Date()) {
     return next(new ErrorHandler('Invalid or expired reset token', 400));
   }
 
-  // Set the new password
-  user.password = req.body.password;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpires = undefined;
-
-  await user.save();
+  // Hash the new password and update user
+  const hashedPassword = await bcrypt.hash(req.body.password, 10);
+  await UserModel.update(user.id, {
+    password: hashedPassword,
+    reset_password_token: null,
+    reset_password_expires: null
+  });
 
   res.status(200).json({
     success: true,
