@@ -1,5 +1,5 @@
 import { createAuction } from "@/store/slices/auctionSlice";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -62,7 +62,7 @@ const CreateAuction = () => {
     if (!isAuthenticated || user.role !== "Auctioneer") {
       navigateTo("/");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigateTo, user.role]);
 
   return (
     <section className="w-full h-fit px-5 pt-[150px] lg:px-[30px] flex flex-col min-h-screen py-8 justify-center">
