@@ -50,36 +50,29 @@ export const getPaymentProofDetail = catchAsyncErrors(
 export const updateProofStatus = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const { amount, status } = req.body;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid ID format.", 400));
-  }
-  let proof = await PaymentProof.findById(id);
+  
+  const proof = await CommissionProofModel.findById(id);
   if (!proof) {
     return next(new ErrorHandler("Payment proof not found.", 404));
   }
-  proof = await PaymentProof.findByIdAndUpdate(
-    id,
-    { status, amount },
-    {
-      new: true,
-      runValidators: true,
-      useFindAndModify: false,
-    }
-  );
+
+  const updatedProof = await CommissionProofModel.update(id, { status, amount });
+  
   res.status(200).json({
     success: true,
     message: "Payment proof amount and status updated.",
-    proof,
+    proof: updatedProof,
   });
 });
 
 export const deletePaymentProof = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const proof = await PaymentProof.findById(id);
-  if (!proof) {
+  const deleted = await CommissionProofModel.delete(id);
+  
+  if (!deleted) {
     return next(new ErrorHandler("Payment proof not found.", 404));
   }
-  await proof.deleteOne();
+
   res.status(200).json({
     success: true,
     message: "Payment proof deleted.",
