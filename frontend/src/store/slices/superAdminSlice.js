@@ -105,16 +105,13 @@ const superAdminSlice = createSlice({
     failureForReports(state) {
       state.loading = false;
       state.reports = [];
-    }, successForAllUsers(state, action) {
-      state.loading = false;
-      state.users = action.payload;
     },
     clearAllErrors(state) {
       state.loading = false;
-      state.monthlyRevenue = state.monthlyRevenue;
-      state.paymentProofs = state.paymentProofs;
-      state.totalAuctioneers = state.totalAuctioneers;
-      state.totalBidders = state.totalBidders;
+      state.monthlyRevenue = [];
+      state.paymentProofs = [];
+      state.totalAuctioneers = [];
+      state.totalBidders = [];
       state.singlePaymentProof = {};
     },
   },

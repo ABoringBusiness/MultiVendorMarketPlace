@@ -12,7 +12,7 @@ const userSlice = createSlice({
     sellerProfile: null,
   },
   reducers: {
-    registerRequest(state, action) {
+    registerRequest(state) {
       state.loading = true;
       state.isAuthenticated = false;
       state.user = {};
@@ -22,12 +22,12 @@ const userSlice = createSlice({
       state.isAuthenticated = true;
       state.user = action.payload.user;
     },
-    registerFailed(state, action) {
+    registerFailed(state) {
       state.loading = false;
       state.isAuthenticated = false;
       state.user = {};
     },
-    loginRequest(state, action) {
+    loginRequest(state) {
       state.loading = true;
       state.isAuthenticated = false;
       state.user = {};
@@ -37,12 +37,12 @@ const userSlice = createSlice({
       state.isAuthenticated = true;
       state.user = action.payload.user;
     },
-    loginFailed(state, action) {
+    loginFailed(state) {
       state.loading = false;
       state.isAuthenticated = false;
       state.user = {};
     },
-    fetchUserRequest(state, action) {
+    fetchUserRequest(state) {
       state.loading = true;
       state.isAuthenticated = false;
       state.user = {};
@@ -52,19 +52,18 @@ const userSlice = createSlice({
       state.isAuthenticated = true;
       state.user = action.payload;
     },
-    fetchUserFailed(state, action) {
+    fetchUserFailed(state) {
       state.loading = false;
       state.isAuthenticated = false;
       state.user = {};
     },
-    logoutSuccess(state, action) {
+    logoutSuccess(state) {
       state.isAuthenticated = false;
       state.user = {};
     },
-    logoutFailed(state, action) {
+    logoutFailed(state) {
       state.loading = false;
-      state.isAuthenticated = state.isAuthenticated;
-      state.user = state.user;
+      // Keep current auth state on logout failure
     },
     fetchLeaderboardRequest(state, action) {
       state.loading = true;
@@ -158,12 +157,9 @@ const userSlice = createSlice({
       state.user = {};
       state.sellerProfile = null;
     },    
-    clearAllErrors(state, action) {
-      state.user = state.user;
-      state.isAuthenticated = state.isAuthenticated;
-      state.leaderboard = state.leaderboard;
+    clearAllErrors(state) {
       state.loading = false;
-      state.sellerProfile = state.sellerProfile;
+      // Keep existing state when clearing errors
     },
   },
 });
