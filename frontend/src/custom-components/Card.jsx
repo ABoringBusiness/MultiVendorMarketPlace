@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToWishlist } from "@/store/slices/userSlice";
@@ -10,7 +10,7 @@ const Card = ({ imgSrc, title, startingBid, startTime, endTime, id, bids = [] })
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
 
-  const calculateTimeLeft = () => {
+  const calculateTimeLeft = useCallback(() => {
     const now = new Date();
     const startDifference = new Date(startTime) - now;
     const endDifference = new Date(endTime) - now;

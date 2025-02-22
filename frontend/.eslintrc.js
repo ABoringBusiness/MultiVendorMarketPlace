@@ -1,4 +1,5 @@
-module.exports = {
+/** @type {import('eslint').Linter.Config} */
+export default {
   root: true,
   env: {
     browser: true,

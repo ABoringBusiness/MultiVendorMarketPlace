@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import DatePicker from "react-datepicker";
@@ -7,7 +7,7 @@ import { deleteAuction, republishAuction } from "@/store/slices/auctionSlice";
 import PropTypes from 'prop-types';
 
 const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
-  const calculateTimeLeft = () => {
+  const calculateTimeLeft = useCallback(() => {
     const now = new Date();
     const startDifference = new Date(startTime) - now;
     const endDifference = new Date(endTime) - now;
