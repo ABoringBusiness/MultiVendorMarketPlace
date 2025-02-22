@@ -119,17 +119,17 @@ const userSlice = createSlice({
     deleteAccountFailed(state) {
       state.loading = false;
     },//
-    addToWishlistRequest(state, action) {
+    addToWishlistRequest(state) {
       state.loading = true;
     },
     addToWishlistSuccess(state, action) {
       state.loading = false;
       state.user.wishlist = [...state.user.wishlist, action.payload];
     },
-    addToWishlistFailed(state, action) {
+    addToWishlistFailed(state) {
       state.loading = false;
     },
-    removeFromWishlistRequest(state, action) {
+    removeFromWishlistRequest(state) {
       state.loading = true;
     },
     removeFromWishlistSuccess(state, action) {
@@ -138,17 +138,17 @@ const userSlice = createSlice({
         (item) => item._id !== action.payload
       );
     },
-    removeFromWishlistFailed(state, action) {
+    removeFromWishlistFailed(state) {
       state.loading = false;
     },
-    getWishlistRequest(state, action) {
+    getWishlistRequest(state) {
       state.loading = true;
     },
     getWishlistSuccess(state, action) {
       state.loading = false;
       state.user.wishlist = action.payload;
     },
-    getWishlistFailed(state, action) {
+    getWishlistFailed(state) {
       state.loading = false;
     },
     clearUserState(state) {
