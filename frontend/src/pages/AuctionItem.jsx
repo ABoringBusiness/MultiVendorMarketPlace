@@ -2,7 +2,7 @@ import Spinner from "@/custom-components/Spinner";
 import { getAuctionDetail } from "@/store/slices/auctionSlice";
 import { placeBid } from "@/store/slices/bidSlice";
 import { addToWishlist } from "@/store/slices/userSlice";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaGreaterThan } from "react-icons/fa";
 import { RiAuctionFill, RiHeartLine, RiHeartFill } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
