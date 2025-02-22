@@ -1,4 +1,4 @@
-import React from "react";
+
 import { RiAuctionFill } from "react-icons/ri";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
