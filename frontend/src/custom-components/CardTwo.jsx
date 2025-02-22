@@ -32,7 +32,6 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
     }
     return timeLeft;
   }, [startTime, endTime]);
-  };
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
