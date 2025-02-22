@@ -1,5 +1,5 @@
 import Spinner from "@/custom-components/Spinner";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { updateUserProfile, logout } from "@/store/slices/userSlice";
@@ -43,7 +43,7 @@ const UserProfile = () => {
         paymentMethods: user.paymentMethods,
       });
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, navigateTo]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
