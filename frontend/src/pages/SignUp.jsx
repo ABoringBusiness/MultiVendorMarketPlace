@@ -55,7 +55,7 @@ const SignUp = () => {
     if (isAuthenticated) {
       navigateTo("/");
     }
-  }, [dispatch, loading, isAuthenticated]);
+  }, [isAuthenticated, navigateTo]);
 
   const imageHandler = (e) => {
     const file = e.target.files[0];

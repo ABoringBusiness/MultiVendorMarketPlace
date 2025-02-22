@@ -32,7 +32,7 @@ const Login = () => {
     if (isAuthenticated) {
       navigateTo("/");
     }
-  }, [dispatch, isAuthenticated, loading]);
+  }, [isAuthenticated, navigateTo]);
 
   return (
     <>
