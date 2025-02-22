@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import SideDrawer from "./layout/SideDrawer";
 import Footer from "./layout/footer";
@@ -40,7 +40,7 @@ const App = () => {
     dispatch(fetchUser());
     dispatch(getAllAuctionItems());
     dispatch(fetchLeaderboard());
-  }, []);
+  }, [dispatch]);
   
   return (
     <Router>
