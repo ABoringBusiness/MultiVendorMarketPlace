@@ -17,9 +17,7 @@ import { verifyCommissionCron } from "./automation/verifyCommissionCron.js";
 import { checkReportedAuctionsCron } from "./automation/AuctionReportsCron.js"
 
 const app = express();
-config({
-  path: "./config/config.env",
-});
+config();
 
 app.use(
   cors({
