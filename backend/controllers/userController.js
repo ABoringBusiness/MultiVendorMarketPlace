@@ -198,39 +198,36 @@ export const updateProfile = catchAsyncErrors(async (req, res, next) => {
 
     const updateFields = {};
 
-    if (userName) updateFields.userName = userName;
+    if (userName) updateFields.user_name = userName;
     if (email) updateFields.email = email;
     if (phone) updateFields.phone = phone;
     if (address) updateFields.address = address;
 
     if (bankTransfer || easypaisa || paypal) {
-      updateFields.paymentMethods = {};
+      updateFields.payment_methods = {};
 
       if (bankTransfer) {
-        updateFields.paymentMethods.bankTransfer = {
-          bankAccountNumber: bankTransfer.bankAccountNumber,
-          bankAccountName: bankTransfer.bankAccountName,
-          bankName: bankTransfer.bankName,
+        updateFields.payment_methods.bank_transfer = {
+          account_number: bankTransfer.bankAccountNumber,
+          account_name: bankTransfer.bankAccountName,
+          bank_name: bankTransfer.bankName,
         };
       }
 
       if (easypaisa) {
-        updateFields.paymentMethods.easypaisa = {
-          easypaisaAccountNumber: easypaisa.easypaisaAccountNumber,
+        updateFields.payment_methods.easypaisa = {
+          account_number: easypaisa.easypaisaAccountNumber,
         };
       }
 
       if (paypal) {
-        updateFields.paymentMethods.paypal = {
-          paypalEmail: paypal.paypalEmail,
+        updateFields.payment_methods.paypal = {
+          email: paypal.paypalEmail,
         };
       }
     }
 
-    const updatedUser = await User.findByIdAndUpdate(userId, updateFields, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedUser = await UserModel.update(userId, updateFields);
 
     res.status(200).json({
       success: true,
@@ -248,7 +245,7 @@ export const deleteAccount = catchAsyncErrors(async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId);
+    const user = await UserModel.findById(userId);
     if (!user) {
       return next(new ErrorHandler("User not found.", 404));
     }
@@ -257,7 +254,7 @@ export const deleteAccount = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Only bidders and auctioneers can delete their account.", 403));
     }
 
-    await User.findByIdAndDelete(userId);
+    await UserModel.delete(userId);
 
     res.status(200).json({
       success: true,
@@ -274,13 +271,29 @@ export const getSellerProfile = catchAsyncErrors(async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const seller = await User.findById(id).select('userName profileImage createdAt role auctionsWon moneySpent email phone address');
+    const seller = await UserModel.findById(id, [
+      'user_name',
+      'profile_image',
+      'created_at',
+      'role',
+      'auctions_won',
+      'money_spent',
+      'email',
+      'phone',
+      'address'
+    ]);
     
     if (!seller) {
       return next(new ErrorHandler("Seller not found", 404));
     }
 
-    const auctions = await Auction.find({ createdBy: id }).select('title startingBid currentBid endTime image');
+    const auctions = await AuctionModel.findByCreator(id, [
+      'title',
+      'starting_bid',
+      'current_bid',
+      'end_time',
+      'image'
+    ]);
 
     res.status(200).json({
       success: true,
