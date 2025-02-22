@@ -1,0 +1,14 @@
+{
+  "development": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postres"
+  },
+  "test": {
+   "use_env_variable": "DATABASE_URL",
+    "dialect": "postres"
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postres"
+  }
+}

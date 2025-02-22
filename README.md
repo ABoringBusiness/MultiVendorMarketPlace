@@ -133,3 +133,9 @@ Consider developing mobile applications for a more seamless user experience if y
 
 Conclusion
 While your multivendor marketplace may start with a subset of these features, a robust platform will eventually encompass a broad range of functionalities to support a seamless experience for all stakeholders. Prioritize features based on your business model, target audience, and growth strategy, and plan for scalable solutions that allow you to expand functionality over time.
+
+
+Run migration
+```DATABASE_URL=<DATABASE_URL> npx sequelize-cli db:migrate --env=production```
+Run seeder
+```DATABASE_URL=<DATABASE_URL> npx sequelize-cli db:seed:all --env=production```
