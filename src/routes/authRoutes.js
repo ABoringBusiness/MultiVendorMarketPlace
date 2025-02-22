@@ -71,7 +71,7 @@ router.post("/login", login);
  *     summary: Logout user
  *     tags: [Authentication]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Logout successful
@@ -85,7 +85,7 @@ router.post("/logout", authMiddleware, logout);
  *     summary: Get user profile
  *     tags: [Authentication]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: User profile retrieved successfully
@@ -99,7 +99,7 @@ router.get("/profile", authMiddleware, getProfile);
  *     summary: Update user profile
  *     tags: [Authentication]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
