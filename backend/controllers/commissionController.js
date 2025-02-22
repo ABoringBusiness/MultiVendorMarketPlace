@@ -1,18 +1,17 @@
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
-import { PaymentProof } from "../models/commissionProofSchema.js";
-import { User } from "../models/userSchema.js";
-import { Auction } from "../models/auctionSchema.js";
-import { v2 as cloudinary } from "cloudinary";
-import mongoose from "mongoose";
+import { CommissionProofModel } from "../models/supabase/commissionProofModel.js";
+import { UserModel } from "../models/supabase/userModel.js";
+import { AuctionModel } from "../models/supabase/auctionModel.js";
+import axios from "axios";
 
 export const calculateCommission = async (auctionId) => {
-  const auction = await Auction.findById(auctionId);
-  if (!mongoose.Types.ObjectId.isValid(auctionId)) {
-    return next(new ErrorHandler("Invalid Auction Id format.", 400));
+  const auction = await AuctionModel.findById(auctionId);
+  if (!auction) {
+    throw new ErrorHandler("Auction not found.", 404);
   }
   const commissionRate = 0.01;
-  const commission = auction.currentBid * commissionRate;
+  const commission = auction.current_bid * commissionRate;
   return commission;
 };
 
@@ -22,25 +21,25 @@ export const proofOfCommission = catchAsyncErrors(async (req, res, next) => {
   }
   const { proof } = req.files;
   const { amount, comment } = req.body;
-  const user = await User.findById(req.user._id);
+  const user = await UserModel.findById(req.user.id);
 
   if (!amount || !comment) {
     return next(
-      new ErrorHandler("Ammount & comment are required fields.", 400)
+      new ErrorHandler("Amount & comment are required fields.", 400)
     );
   }
 
-  if (user.unpaidCommission === 0) {
+  if (user.unpaid_commission === 0) {
     return res.status(200).json({
       success: true,
       message: "You don't have any unpaid commissions.",
     });
   }
 
-  if (user.unpaidCommission < amount) {
+  if (user.unpaid_commission < amount) {
     return next(
       new ErrorHandler(
-        `The amount exceeds your unpaid commission balance. Please enter an amount up to ${user.unpaidCommission}`,
+        `The amount exceeds your unpaid commission balance. Please enter an amount up to ${user.unpaid_commission}`,
         403
       )
     );
@@ -48,27 +47,33 @@ export const proofOfCommission = catchAsyncErrors(async (req, res, next) => {
 
   const allowedFormats = ["image/png", "image/jpeg", "image/webp"];
   if (!allowedFormats.includes(proof.mimetype)) {
-    return next(new ErrorHandler("ScreenShot format not supported.", 400));
+    return next(new ErrorHandler("Screenshot format not supported.", 400));
   }
 
-  const cloudinaryResponse = await cloudinary.uploader.upload(
-    proof.tempFilePath,
-    {
-      folder: "MERN_AUCTION_PAYMENT_PROOFS",
+  // Upload image to TwicPics
+  const formData = new FormData();
+  formData.append('image', proof.buffer);
+  
+  const twicResponse = await axios.post('https://styley.twicpics.com/v1/upload', formData, {
+    headers: {
+      'Authorization': `Bearer ${process.env.TWICPICS_TOKEN}`,
+      'Content-Type': 'multipart/form-data'
     }
-  );
-  if (!cloudinaryResponse || cloudinaryResponse.error) {
+  });
+
+  if (!twicResponse.data || twicResponse.data.error) {
     console.error(
-      "Cloudinary error:",
-      cloudinaryResponse.error || "Unknown cloudinary error."
+      "TwicPics error:",
+      twicResponse.data.error || "Unknown TwicPics error."
     );
     return next(new ErrorHandler("Failed to upload payment proof.", 500));
   }
-  const commissionProof = await PaymentProof.create({
-    userId: req.user._id,
+
+  const commissionProof = await CommissionProofModel.create({
+    user_id: req.user.id,
     proof: {
-      public_id: cloudinaryResponse.public_id,
-      url: cloudinaryResponse.secure_url,
+      path: twicResponse.data.path,
+      url: `${process.env.TWICPICS_DOMAIN}/${twicResponse.data.path}`
     },
     amount,
     comment,
