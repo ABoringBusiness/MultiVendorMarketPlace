@@ -310,7 +310,7 @@ export const addToWishlist = catchAsyncErrors(async (req, res, next) => {
   const { userId, auctionId } = req.body;
 
   try {
-    const user = await User.findById(userId);
+    const user = await UserModel.findById(userId);
     if (!user) {
       return next(new ErrorHandler("User not found.", 404));
     }
@@ -319,12 +319,13 @@ export const addToWishlist = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Only bidders can have a wishlist.", 403));
     }
 
-    if (user.wishlist.includes(auctionId)) {
+    const wishlist = user.wishlist || [];
+    if (wishlist.includes(auctionId)) {
       return next(new ErrorHandler("Auction already in wishlist.", 409));
     }
 
-    user.wishlist.push(auctionId);
-    await user.save();
+    wishlist.push(auctionId);
+    await UserModel.update(userId, { wishlist });
 
     res.status(201).json({
       success: true,
@@ -339,7 +340,7 @@ export const removeFromWishlist = catchAsyncErrors(async (req, res, next) => {
   const { userId, auctionId } = req.body;
 
   try {
-    const user = await User.findById(userId);
+    const user = await UserModel.findById(userId);
     if (!user) {
       return next(new ErrorHandler("User not found.", 404));
     }
@@ -348,8 +349,8 @@ export const removeFromWishlist = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Only bidders can have a wishlist.", 403));
     }
 
-    user.wishlist = user.wishlist.filter((id) => id.toString() !== auctionId);
-    await user.save();
+    const wishlist = (user.wishlist || []).filter(id => id !== auctionId);
+    await UserModel.update(userId, { wishlist });
 
     res.status(200).json({
       success: true,
@@ -364,7 +365,7 @@ export const getWishlist = catchAsyncErrors(async (req, res, next) => {
   const { userId } = req.params;
 
   try {
-    const user = await User.findById(userId).populate("wishlist");
+    const user = await UserModel.findById(userId);
     if (!user) {
       return next(new ErrorHandler("User not found.", 404));
     }
@@ -373,9 +374,13 @@ export const getWishlist = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Only bidders can have a wishlist.", 403));
     }
 
+    const wishlist = await Promise.all(
+      (user.wishlist || []).map(id => AuctionModel.findById(id))
+    );
+
     res.status(200).json({
       success: true,
-      wishlist: user.wishlist,
+      wishlist: wishlist.filter(Boolean), // Remove any null values from deleted auctions
     });
   } catch (error) {
     return next(new ErrorHandler("Server error", 500));
