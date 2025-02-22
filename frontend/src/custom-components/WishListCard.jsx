@@ -1,8 +1,8 @@
-import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { removeFromWishlist } from "@/store/slices/userSlice";
 import { FaTimes } from "react-icons/fa";
 import { toast } from "react-toastify";
+import PropTypes from 'prop-types';
 
 const WishlistCard = ({ imgSrc, title, startingBid, endTime, id }) => {
   const dispatch = useDispatch();
@@ -62,6 +62,14 @@ const WishlistCard = ({ imgSrc, title, startingBid, endTime, id }) => {
       </div>
     </div>
   );
+};
+
+WishlistCard.propTypes = {
+  imgSrc: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  startingBid: PropTypes.number.isRequired,
+  endTime: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired
 };
 
 export default WishlistCard;
