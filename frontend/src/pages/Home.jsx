@@ -1,11 +1,9 @@
-import React from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import FeaturedAuctions from "./home-sub-components/FeaturedAuctions";
 import UpcomingAuctions from "./home-sub-components/UpcomingAuctions";
 import EndingSoonAuctions from "./home-sub-components/EndingSoonAuctions";
 import Leaderboard from "./home-sub-components/Leaderboard";
-import Spinner from "@/custom-components/Spinner";
 
 const Home = () => {
   const howItWorks = [
