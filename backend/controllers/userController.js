@@ -1,8 +1,8 @@
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
-import { User } from "../models/userSchema.js";
-import { Auction } from "../models/auctionSchema.js";
-import { v2 as cloudinary } from "cloudinary";
+import { UserModel } from "../models/supabase/userModel.js";
+import { AuctionModel } from "../models/supabase/auctionModel.js";
+import axios from "axios";
 import { generateToken } from "../utils/jwtToken.js";
 import bcrypt from "bcryptjs";
 import crypto from 'crypto';
@@ -52,47 +52,54 @@ export const register = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Please provide your paypal email.", 400));
     }
   }
-  const isRegistered = await User.findOne({ email });
+  const isRegistered = await UserModel.findByEmail(email);
   if (isRegistered) {
     return next(new ErrorHandler("User already registered.", 400));
   }
-  const cloudinaryResponse = await cloudinary.uploader.upload(
-    profileImage.tempFilePath,
-    {
-      folder: "MERN_AUCTION_PLATFORM_USERS",
+
+  // Upload image to TwicPics
+  const formData = new FormData();
+  formData.append('image', profileImage.buffer);
+  
+  const twicResponse = await axios.post('https://styley.twicpics.com/v1/upload', formData, {
+    headers: {
+      'Authorization': `Bearer ${process.env.TWICPICS_TOKEN}`,
+      'Content-Type': 'multipart/form-data'
     }
-  );
-  if (!cloudinaryResponse || cloudinaryResponse.error) {
+  });
+
+  if (!twicResponse.data || twicResponse.data.error) {
     console.error(
-      "Cloudinary error:",
-      cloudinaryResponse.error || "Unknown cloudinary error."
+      "TwicPics error:",
+      twicResponse.data.error || "Unknown TwicPics error."
     );
     return next(
-      new ErrorHandler("Failed to upload profile image to cloudinary.", 500)
+      new ErrorHandler("Failed to upload profile image.", 500)
     );
   }
-  const user = await User.create({
-    userName,
+
+  const user = await UserModel.create({
+    user_name: userName,
     email,
     password,
     phone,
     address,
     role,
-    profileImage: {
-      public_id: cloudinaryResponse.public_id,
-      url: cloudinaryResponse.secure_url,
+    profile_image: {
+      path: twicResponse.data.path,
+      url: `${process.env.TWICPICS_DOMAIN}/${twicResponse.data.path}`
     },
-    paymentMethods: {
-      bankTransfer: {
-        bankAccountNumber,
-        bankAccountName,
-        bankName,
+    payment_methods: {
+      bank_transfer: {
+        account_number: bankAccountNumber,
+        account_name: bankAccountName,
+        bank_name: bankName,
       },
       easypaisa: {
-        easypaisaAccountNumber,
+        account_number: easypaisaAccountNumber,
       },
       paypal: {
-        paypalEmail,
+        email: paypalEmail,
       },
     },
   });
@@ -104,14 +111,16 @@ export const login = catchAsyncErrors(async (req, res, next) => {
   if (!email || !password) {
     return next(new ErrorHandler("Please fill full form."));
   }
-  const user = await User.findOne({ email }).select("+password");
+  const user = await UserModel.findByEmail(email);
   if (!user) {
     return next(new ErrorHandler("Invalid credentials.", 400));
   }
-  const isPasswordMatch = await user.comparePassword(password);
+  
+  const isPasswordMatch = await bcrypt.compare(password, user.password);
   if (!isPasswordMatch) {
     return next(new ErrorHandler("Invalid credentials.", 400));
   }
+  
   generateToken(user, "Login successfully.", 200, res);
 });
 
