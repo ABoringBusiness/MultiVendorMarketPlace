@@ -216,22 +216,22 @@ export const approveCategorySuggestion = catchAsyncErrors(async (req, res, next)
 
 export const rejectCategorySuggestion = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid Id format.", 400));
-  }
-  const suggestion = await CategorySuggestion.findById(id);
+  const suggestion = await CategorySuggestionModel.findById(id);
+  
   if (!suggestion) {
     return next(new ErrorHandler("Suggestion not found.", 404));
   }
-  suggestion.status = "Rejected";
-  await suggestion.save();
 
-  const user = await User.findById(suggestion.suggestedBy);
+  const updatedSuggestion = await CategorySuggestionModel.update(id, {
+    status: "Rejected"
+  });
+
+  const user = await UserModel.findById(suggestion.suggested_by);
   if (user) {
     await sendEmail({
       email: user.email,
       subject: "Category Suggestion Rejected",
-      message: `Your suggested category "${suggestion.suggestedCategory}" has been rejected. Thank you for your effort!`,
+      message: `Your suggested category "${suggestion.suggested_category}" has been rejected. Thank you for your effort!`,
     });
   }
 
@@ -244,9 +244,7 @@ export const rejectCategorySuggestion = catchAsyncErrors(async (req, res, next) 
 
 export const getAllReportedAuctions = catchAsyncErrors(async (req, res, next) => {
   try {
-    const reports = await Report.find()
-      .populate("auctionId", "title image.url startingBid condition")
-      .populate("reportedBy", "userName email"); 
+    const reports = await ReportModel.findAllWithDetails();
 
     res.status(200).json({
       success: true,
@@ -267,39 +265,34 @@ export const updateReportStatus = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params; 
   const { status } = req.body; 
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid ID format.", 400));
-  }
-
   if (!['Pending', 'Reviewed', 'Resolved'].includes(status)) {
     return next(new ErrorHandler("Invalid status value.", 400));
   }
 
   try {
-    const report = await Report.findById(id).populate("auctionId", "title createdBy");
-
+    const report = await ReportModel.findById(id);
     if (!report) {
       return next(new ErrorHandler("Report not found.", 404));
     }
 
-    report.status = status;
-    await report.save();
+    const updatedReport = await ReportModel.update(id, { status });
 
     if (status === "Resolved") {
-      const auction = await Auction.findById(report.auctionId._id).populate("createdBy", "email userName");
-
+      const auction = await AuctionModel.findById(report.auction_id);
       if (!auction) {
         return next(new ErrorHandler("Auction associated with the report not found.", 404));
       }
 
-      const auctioneerEmail = auction.createdBy.email;
-      const auctioneerName = auction.createdBy.userName;
+      const auctioneer = await UserModel.findById(auction.created_by);
+      if (!auctioneer) {
+        return next(new ErrorHandler("Auctioneer not found.", 404));
+      }
 
-      await auction.deleteOne();
+      await AuctionModel.delete(auction.id);
 
       const emailSubject = "Auction Removed Due to Reports";
       const emailMessage = `
-        Dear ${auctioneerName},
+        Dear ${auctioneer.user_name},
 
         We regret to inform you that your auction titled "${auction.title}" has been removed from our platform due to multiple reports from users.
 
@@ -312,7 +305,7 @@ export const updateReportStatus = catchAsyncErrors(async (req, res, next) => {
       `;
 
       await sendEmail({
-        email: auctioneerEmail,
+        email: auctioneer.email,
         subject: emailSubject,
         message: emailMessage,
       });
@@ -323,7 +316,7 @@ export const updateReportStatus = catchAsyncErrors(async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Report status updated successfully.",
-      report,
+      report: updatedReport,
     });
   } catch (error) {
     console.error("Error updating report status:", error);
