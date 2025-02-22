@@ -1,46 +1,47 @@
-import { Report } from "../models/reportSchema.js";
-import { Auction } from "../models/auctionSchema.js";
+import { ReportModel } from "../models/supabase/reportModel.js";
+import { AuctionModel } from "../models/supabase/auctionModel.js";
 
 export const checkReportedAuctions = async () => {
   try {
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // Aggregate reports for auctions within the last 24 hours
-    const reports = await Report.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: twentyFourHoursAgo }, // Only consider reports from the last 24 hours
-        },
-      },
-      {
-        $group: {
-          _id: { auctionId: "$auctionId", reason: "$reason" }, // Group by auctionId and reason
-          count: { $sum: 1 }, // Count the number of reports
-        },
-      },
-      {
-        $match: { count: { $gte: 10 } }, // Only groups with 10 or more reports
-      },
-    ]);
+    // Get all reports from the last 24 hours
+    const recentReports = await ReportModel.findRecentReports(twentyFourHoursAgo);
+    
+    // Group reports by auction and reason
+    const reportGroups = recentReports.reduce((acc, report) => {
+      const key = `${report.auction_id}:${report.reason}`;
+      if (!acc[key]) {
+        acc[key] = {
+          auction_id: report.auction_id,
+          reason: report.reason,
+          count: 0
+        };
+      }
+      acc[key].count++;
+      return acc;
+    }, {});
+
+    // Filter groups with 10 or more reports
+    const reports = Object.values(reportGroups).filter(group => group.count >= 10);
 
     // Iterate over the grouped reports to delete auctions
     for (const report of reports) {
-      const { auctionId, reason } = report._id;
+      const { auction_id, reason } = report;
 
       // Delete the auction if it exists
-      const auction = await Auction.findById(auctionId);
+      const auction = await AuctionModel.findById(auction_id);
       if (auction) {
-        await auction.deleteOne();
+        await AuctionModel.delete(auction_id);
         console.log(
-          `Auction ${auctionId} deleted due to receiving 10 or more reports for the reason: ${reason}.`
+          `Auction ${auction_id} deleted due to receiving 10 or more reports for the reason: ${reason}.`
         );
 
-        // Optionally update related reports to "Resolved"
-        await Report.updateMany(
-          { auctionId, reason },
-          { $set: { status: "Resolved" } }
-        );
+        // Update related reports to "Resolved"
+        await ReportModel.updateByAuctionId(auction_id, {
+          status: "Resolved"
+        });
       }
     }
 
