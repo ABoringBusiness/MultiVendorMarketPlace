@@ -54,7 +54,7 @@ const About = () => {
           </p>
           <h3 className="text-[#111] text-2xl font-semibold mb-4">Join Us</h3>
           <p className="text-lg text-stone-600 mb-8">
-            Whether you're looking to buy, sell, or simply explore, NelamiGhar invites you to join our growing community of auction enthusiasts. Discover new opportunities, uncover hidden gems, and experience the thrill of winning your next great find.
+            Whether you&apos;re looking to buy, sell, or simply explore, NelamiGhar invites you to join our growing community of auction enthusiasts. Discover new opportunities, uncover hidden gems, and experience the thrill of winning your next great find.
           </p>
           <p className="text-[#d6482b] text-xl font-bold mb-3 text-center">
             Thank you for choosing NelamiGhar. We look forward to being a part of your auction journey!
