@@ -65,7 +65,7 @@ const userSlice = createSlice({
       state.loading = false;
       // Keep current auth state on logout failure
     },
-    fetchLeaderboardRequest(state, action) {
+    fetchLeaderboardRequest(state) {
       state.loading = true;
       state.leaderboard = [];
     },
@@ -73,30 +73,30 @@ const userSlice = createSlice({
       state.loading = false;
       state.leaderboard = action.payload;
     },
-    fetchLeaderboardFailed(state, action) {
+    fetchLeaderboardFailed(state) {
       state.loading = false;
       state.leaderboard = [];
     },
-    changePasswordRequest(state, action) {
+    changePasswordRequest(state) {
       state.loading = true;
     },
-    changePasswordSuccess(state, action) {
+    changePasswordSuccess(state) {
       state.loading = false;
     },
-    changePasswordFailed(state, action) {
+    changePasswordFailed(state) {
       state.loading = false;
     },
-    updateUserRequest(state, action) {
+    updateUserRequest(state) {
       state.loading = true;
     },
     updateUserSuccess(state, action) {
       state.loading = false;
       state.user = action.payload.user;
     },
-    updateUserFailed(state, action) {
+    updateUserFailed(state) {
       state.loading = false;
     },
-    fetchSellerProfileRequest(state, action) {
+    fetchSellerProfileRequest(state) {
       state.loading = true;
       state.sellerProfile = null;
     },
@@ -104,7 +104,7 @@ const userSlice = createSlice({
       state.loading = false;
       state.sellerProfile = action.payload;
     },
-    fetchSellerProfileFailed(state, action) {
+    fetchSellerProfileFailed(state) {
       state.loading = false;
       state.sellerProfile = null;
     },//
