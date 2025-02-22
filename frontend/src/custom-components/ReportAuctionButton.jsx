@@ -1,5 +1,5 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 const ReportAuctionButton = ({ auctionId }) => {
   return (
@@ -9,6 +9,10 @@ const ReportAuctionButton = ({ auctionId }) => {
       </button>
     </Link>
   );
+};
+
+ReportAuctionButton.propTypes = {
+  auctionId: PropTypes.string.isRequired
 };
 
 export default ReportAuctionButton;

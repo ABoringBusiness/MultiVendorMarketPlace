@@ -81,7 +81,7 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
                   {formatTimeLeft(timeLeft)}
                 </span>
               ) : (
-                <span className="text-red-500 font-bold ml-1">Time's up!</span>
+                <span className="text-red-500 font-bold ml-1">Time&apos;s up!</span>
               )}
             </p>
           </div>
@@ -139,13 +139,25 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
   );
 };
 
+Drawer.propTypes = {
+  setOpenDrawer: PropTypes.func.isRequired,
+  openDrawer: PropTypes.bool.isRequired,
+  id: PropTypes.string.isRequired
+};
+
 CardTwo.propTypes = {
   imgSrc: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   startingBid: PropTypes.number.isRequired,
   startTime: PropTypes.string.isRequired,
   endTime: PropTypes.string.isRequired,
-  id: PropTypes.string.isRequired
+  id: PropTypes.string.isRequired,
+  bids: PropTypes.arrayOf(PropTypes.shape({
+    user_id: PropTypes.string.isRequired,
+    user_name: PropTypes.string.isRequired,
+    profile_image: PropTypes.string,
+    amount: PropTypes.number.isRequired
+  }))
 };
 
 export default CardTwo;

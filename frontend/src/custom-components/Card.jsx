@@ -78,7 +78,7 @@ const Card = ({ imgSrc, title, startingBid, startTime, endTime, id, bids = [] })
                 {formatTimeLeft(timeLeft)}
               </span>
             ) : (
-              <span className="text-red-500 font-bold ml-1">Time's up!</span>
+              <span className="text-red-500 font-bold ml-1">Time&apos;s up!</span>
             )}
           </p>
           {startingBid && (
@@ -112,7 +112,12 @@ Card.propTypes = {
   startTime: PropTypes.string.isRequired,
   endTime: PropTypes.string.isRequired,
   id: PropTypes.string.isRequired,
-  bids: PropTypes.arrayOf(PropTypes.object)
+  bids: PropTypes.arrayOf(PropTypes.shape({
+    user_id: PropTypes.string.isRequired,
+    user_name: PropTypes.string.isRequired,
+    profile_image: PropTypes.string,
+    amount: PropTypes.number.isRequired
+  }))
 };
 
 export default Card;
