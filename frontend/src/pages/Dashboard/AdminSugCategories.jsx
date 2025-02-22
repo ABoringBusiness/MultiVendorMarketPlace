@@ -3,7 +3,7 @@ import {
   approveCategorySuggestion,
   rejectCategorySuggestion,
 } from "@/store/slices/adminCategorySuggestionSlice";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Spinner from "@/custom-components/Spinner";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
