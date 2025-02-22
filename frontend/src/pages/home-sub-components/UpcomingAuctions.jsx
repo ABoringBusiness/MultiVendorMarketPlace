@@ -26,7 +26,7 @@ const UpcomingAuctions = () => {
               <RiAuctionFill />
             </span>
             <div>
-              <h3 className="text-white text-2xl font-bold mb-4">Today's Auctions</h3>
+              <h3 className="text-white text-2xl font-bold mb-4">Today&apos;s Auctions</h3>
               <p className="text-white text-lg">Get ready for the latest auctions starting today.</p>
             </div>
           </div>

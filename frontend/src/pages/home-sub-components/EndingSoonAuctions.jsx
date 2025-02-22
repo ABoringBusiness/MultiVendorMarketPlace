@@ -27,7 +27,7 @@ const EndingSoonAuctions = () => {
               <RiAuctionFill />
             </span>
             <div>
-              <h3 className="text-white text-2xl font-bold mb-4">Don't Miss Out!</h3>
+              <h3 className="text-white text-2xl font-bold mb-4">Don&apos;t Miss Out!</h3>
               <p className="text-white text-lg">These auctions are ending soon. Act fast!</p>
             </div>
           </div>
