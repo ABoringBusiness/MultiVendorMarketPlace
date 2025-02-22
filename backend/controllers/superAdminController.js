@@ -164,7 +164,7 @@ export const monthlyRevenue = catchAsyncErrors(async (req, res, next) => {
 
 export const fetchAllUserDetails = catchAsyncErrors(async (req, res, next) => {
   try {
-    const users = await User.find({}, 'userName email role address phone profileImage createdAt');
+    const users = await UserModel.findAll(['user_name', 'email', 'role', 'address', 'phone', 'profile_image', 'created_at']);
 
     res.status(200).json({
       success: true,
@@ -180,7 +180,7 @@ export const fetchAllUserDetails = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const fetchAllCategorySuggestions = catchAsyncErrors(async (req, res, next) => {
-  const suggestions = await CategorySuggestion.find();
+  const suggestions = await CategorySuggestionModel.findAll();
   res.status(200).json({
     success: true,
     suggestions,
@@ -189,22 +189,22 @@ export const fetchAllCategorySuggestions = catchAsyncErrors(async (req, res, nex
 
 export const approveCategorySuggestion = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid Id format.", 400));
-  }
-  const suggestion = await CategorySuggestion.findById(id);
+  const suggestion = await CategorySuggestionModel.findById(id);
+  
   if (!suggestion) {
     return next(new ErrorHandler("Suggestion not found.", 404));
   }
-  suggestion.status = "Approved";
-  await suggestion.save();
 
-  const user = await User.findById(suggestion.suggestedBy);
+  const updatedSuggestion = await CategorySuggestionModel.update(id, {
+    status: "Approved"
+  });
+
+  const user = await UserModel.findById(suggestion.suggested_by);
   if (user) {
     await sendEmail({
       email: user.email,
       subject: "Category Suggestion Approved",
-      message: `Your suggested category "${suggestion.suggestedCategory}" has been approved. Thank you for your contribution!`,
+      message: `Your suggested category "${suggestion.suggested_category}" has been approved. Thank you for your contribution!`,
     });
   }
 
