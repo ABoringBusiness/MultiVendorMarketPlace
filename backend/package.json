@@ -2,6 +2,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",
     "@twicpics/components": "^0.32.0",
+    "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.4.0",

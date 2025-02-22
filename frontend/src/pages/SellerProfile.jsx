@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSellerProfile } from '../store/slices/userSlice';
-import { toast } from 'react-toastify';
 
 function SellerProfile() {
   const { id } = useParams();
