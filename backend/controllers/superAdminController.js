@@ -1,25 +1,22 @@
-import mongoose from "mongoose";
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
-import { Commission } from "../models/commissionSchema.js";
-import { User } from "../models/userSchema.js";
-import { CategorySuggestion} from "../models/categorySuggestion.js"
-import { Auction } from "../models/auctionSchema.js";
-import { PaymentProof } from "../models/commissionProofSchema.js";
-import { sendEmail } from "../utils/sendEmail.js"; 
-import { Report } from "../models/reportSchema.js"; 
+import { CommissionModel } from "../models/supabase/commissionModel.js";
+import { UserModel } from "../models/supabase/userModel.js";
+import { CategorySuggestionModel } from "../models/supabase/categorySuggestionModel.js";
+import { AuctionModel } from "../models/supabase/auctionModel.js";
+import { CommissionProofModel } from "../models/supabase/commissionProofModel.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { ReportModel } from "../models/supabase/reportModel.js";
 
 
 export const deleteAuctionItem = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid Id format.", 400));
-  }
-  const auctionItem = await Auction.findById(id);
-  if (!auctionItem) {
+  const deleted = await AuctionModel.delete(id);
+  
+  if (!deleted) {
     return next(new ErrorHandler("Auction not found.", 404));
   }
-  await auctionItem.deleteOne();
+
   res.status(200).json({
     success: true,
     message: "Auction item deleted successfully.",
@@ -27,7 +24,7 @@ export const deleteAuctionItem = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const getAllPaymentProofs = catchAsyncErrors(async (req, res, next) => {
-  let paymentProofs = await PaymentProof.find();
+  const paymentProofs = await CommissionProofModel.findAll();
   res.status(200).json({
     success: true,
     paymentProofs,
@@ -37,7 +34,12 @@ export const getAllPaymentProofs = catchAsyncErrors(async (req, res, next) => {
 export const getPaymentProofDetail = catchAsyncErrors(
   async (req, res, next) => {
     const { id } = req.params;
-    const paymentProofDetail = await PaymentProof.findById(id);
+    const paymentProofDetail = await CommissionProofModel.findById(id);
+    
+    if (!paymentProofDetail) {
+      return next(new ErrorHandler("Payment proof not found.", 404));
+    }
+
     res.status(200).json({
       success: true,
       paymentProofDetail,
