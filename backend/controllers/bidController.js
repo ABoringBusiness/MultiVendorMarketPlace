@@ -1,64 +1,70 @@
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
-import { Auction } from "../models/auctionSchema.js";
-import { Bid } from "../models/bidSchema.js";
-import { User } from "../models/userSchema.js";
+import { AuctionModel } from "../models/supabase/auctionModel.js";
+import { BidModel } from "../models/supabase/bidModel.js";
+import { UserModel } from "../models/supabase/userModel.js";
 
 export const placeBid = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const auctionItem = await Auction.findById(id);
+  const auctionItem = await AuctionModel.findById(id);
   if (!auctionItem) {
     return next(new ErrorHandler("Auction Item not found.", 404));
   }
+  
   const { amount } = req.body;
   if (!amount) {
     return next(new ErrorHandler("Please place your bid.", 404));
   }
-  if (amount <= auctionItem.currentBid) {
+  
+  if (amount <= auctionItem.current_bid) {
     return next(
       new ErrorHandler("Bid amount must be greater than the current bid.", 404)
     );
   }
-  if (amount < auctionItem.startingBid) {
+  
+  if (amount < auctionItem.starting_bid) {
     return next(
       new ErrorHandler("Bid amount must be greater than starting bid.", 404)
     );
   }
 
   try {
-    const existingBid = await Bid.findOne({
-      "bidder.id": req.user._id,
-      auctionItem: auctionItem._id,
-    });
-    const existingBidInAuction = auctionItem.bids.find(
-      (bid) => bid.userId.toString() == req.user._id.toString()
-    );
-    if (existingBid && existingBidInAuction) {
-      existingBidInAuction.amount = amount;
-      existingBid.amount = amount;
-      await existingBidInAuction.save();
-      await existingBid.save();
-      auctionItem.currentBid = amount;
+    const existingBid = await BidModel.findByBidderAndAuction(req.user.id, id);
+    const bidderDetail = await UserModel.findById(req.user.id);
+    
+    if (existingBid) {
+      // Update existing bid
+      await BidModel.update(existingBid.id, { amount });
+      
+      // Update auction's current bid
+      await AuctionModel.update(id, {
+        current_bid: amount,
+        bids: auctionItem.bids.map(bid => 
+          bid.user_id === req.user.id ? { ...bid, amount } : bid
+        )
+      });
     } else {
-      const bidderDetail = await User.findById(req.user._id);
-      const bid = await Bid.create({
+      // Create new bid
+      await BidModel.create({
         amount,
-        bidder: {
-          id: bidderDetail._id,
-          userName: bidderDetail.userName,
-          profileImage: bidderDetail.profileImage?.url,
-        },
-        auctionItem: auctionItem._id,
+        bidder_id: bidderDetail.id,
+        auction_id: id,
+        bidder_name: bidderDetail.user_name,
+        bidder_image: bidderDetail.profile_image?.url
       });
-      auctionItem.bids.push({
-        userId: req.user._id,
-        userName: bidderDetail.userName,
-        profileImage: bidderDetail.profileImage?.url,
-        amount,
+      
+      // Update auction with new bid
+      const newBid = {
+        user_id: req.user.id,
+        user_name: bidderDetail.user_name,
+        profile_image: bidderDetail.profile_image?.url,
+        amount
+      };
+      
+      await AuctionModel.update(id, {
+        current_bid: amount,
+        bids: [...(auctionItem.bids || []), newBid]
       });
-      auctionItem.currentBid = amount;
-    }
-    await auctionItem.save();
 
     res.status(201).json({
       success: true,
