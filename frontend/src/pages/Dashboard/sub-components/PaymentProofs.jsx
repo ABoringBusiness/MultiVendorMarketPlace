@@ -3,10 +3,11 @@ import {
   getSinglePaymentProofDetail,
   updatePaymentProof,
 } from "@/store/slices/superAdminSlice";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { FaTrashAlt, FaEdit } from "react-icons/fa";
+import PropTypes from 'prop-types';
 
 const PaymentProofs = () => {
   const { paymentProofs, singlePaymentProof } = useSelector(
@@ -71,6 +72,16 @@ const PaymentProofs = () => {
       {openDrawer && <Drawer setOpenDrawer={setOpenDrawer} openDrawer={openDrawer} />}
     </section>
   );
+};
+
+Drawer.propTypes = {
+  setOpenDrawer: PropTypes.func.isRequired,
+  openDrawer: PropTypes.bool.isRequired
+};
+
+PaymentProofs.propTypes = {
+  setOpenDrawer: PropTypes.func.isRequired,
+  openDrawer: PropTypes.bool.isRequired
 };
 
 export default PaymentProofs;
