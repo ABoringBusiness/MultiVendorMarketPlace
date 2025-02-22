@@ -1,126 +1,86 @@
-// src/controllers/authController.js
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { User } = require('../../models');
+const jwt = require("jsonwebtoken");
+const { User } = require("../models");
+require("dotenv").config();
 
-/**
- * @swagger
- * tags:
- *   name: Authentication
- *   description: User registration and login
- */
+// Generate JWT Token
+const generateToken = (user) => {
+  return jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+};
 
-/**
- * @swagger
- * /api/auth/register:
- *   post:
- *     summary: Register a new user
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *             properties:
- *               name:
- *                 type: string
- *                 example: John Doe
- *               email:
- *                 type: string
- *                 example: john.doe@example.com
- *               password:
- *                 type: string
- *                 example: secret123
- *               role:
- *                 type: string
- *                 example: buyer
- *     responses:
- *       201:
- *         description: User registered successfully.
- *       400:
- *         description: Bad Request.
- */
+// @desc Register user
+// @route POST /api/auth/register
 exports.register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
-    if (existingUser)
-      return res.status(400).json({ message: 'Email already exists.' });
+    if (existingUser) return res.status(400).json({ message: "Email already exists" });
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, password, role });
 
-    // Create user (default role could be set to 'buyer' if role is not provided)
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || 'buyer',
-    });
-
-    res.status(201).json({ message: 'User registered successfully.' });
+    res.status(201).json({ message: "User registered successfully", token: generateToken(user) });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-/**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Login a user and retrieve a JWT token
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 example: john.doe@example.com
- *               password:
- *                 type: string
- *                 example: secret123
- *     responses:
- *       200:
- *         description: Successful login.
- *       400:
- *         description: Invalid credentials.
- */
+// @desc Login user
+// @route POST /api/auth/login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if the user exists
     const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(400).json({ message: 'User not found.' });
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
-    // Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: 'Invalid credentials.' });
+    const isMatch = await user.isValidPassword(password);
+    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-    // Sign token
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    res.json({ message: "Login successful", token: generateToken(user) });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// @desc Logout user (invalidate token client-side)
+// @route POST /api/auth/logout
+exports.logout = async (req, res) => {
+  try {
+    // There's no real way to invalidate a JWT without a token blacklist mechanism
+    res.json({ message: "Logout successful, remove token on client-side" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// @desc Get user profile
+// @route GET /api/auth/profile
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, { attributes: { exclude: ["password"] } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// @desc Update user profile
+// @route PUT /api/auth/update-profile
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    const user = await User.findByPk(req.user.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+    await user.save();
+
+    res.json({ message: "Profile updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
   }
 };

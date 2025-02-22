@@ -1,18 +1,12 @@
-// src/routes/authRoutes.js
-const express = require('express');
-const { register, login } = require('../controllers/authController');
+const express = require("express");
+const { register, login, logout, getProfile, updateProfile } = require("../controllers/authController");
+const authMiddleware = require("../middleware/authMiddleware");
+
 const router = express.Router();
 
 /**
  * @swagger
- * tags:
- *   name: Authentication
- *   description: Endpoints for user authentication
- */
-
-/**
- * @swagger
- * /api/auth/register:
+ * /auth/register:
  *   post:
  *     summary: Register a new user
  *     tags: [Authentication]
@@ -26,32 +20,29 @@ const router = express.Router();
  *               - name
  *               - email
  *               - password
+ *               - role
  *             properties:
  *               name:
  *                 type: string
- *                 example: John Doe
  *               email:
  *                 type: string
- *                 example: john.doe@example.com
+ *                 format: email
  *               password:
  *                 type: string
- *                 example: secret123
  *               role:
  *                 type: string
- *                 example: buyer
+ *                 enum: [buyer, seller, admin]
  *     responses:
  *       201:
  *         description: User registered successfully
- *       400:
- *         description: Bad Request
  */
-router.post('/register', register);
+router.post("/register", register);
 
 /**
  * @swagger
- * /api/auth/login:
+ * /auth/login:
  *   post:
- *     summary: Log in a user
+ *     summary: User login
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -65,16 +56,65 @@ router.post('/register', register);
  *             properties:
  *               email:
  *                 type: string
- *                 example: john.doe@example.com
  *               password:
  *                 type: string
- *                 example: secret123
  *     responses:
  *       200:
- *         description: Successful login with JWT token returned
- *       400:
- *         description: Invalid credentials
+ *         description: Login successful
  */
-router.post('/login', login);
+router.post("/login", login);
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
+router.post("/logout", authMiddleware, logout);
+
+/**
+ * @swagger
+ * /auth/profile:
+ *   get:
+ *     summary: Get user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ */
+router.get("/profile", authMiddleware, getProfile);
+
+/**
+ * @swagger
+ * /auth/update-profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ */
+router.put("/update-profile", authMiddleware, updateProfile);
 
 module.exports = router;
