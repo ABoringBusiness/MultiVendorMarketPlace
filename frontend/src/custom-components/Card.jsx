@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToWishlist } from "@/store/slices/userSlice";
 import { toast } from "react-toastify";
 import { FaHeart, FaUser } from "react-icons/fa";
+import PropTypes from 'prop-types';
 
 const Card = ({ imgSrc, title, startingBid, startTime, endTime, id, bids = [] }) => {
   const dispatch = useDispatch();
@@ -42,7 +43,7 @@ const Card = ({ imgSrc, title, startingBid, startTime, endTime, id, bids = [] })
       setTimeLeft(calculateTimeLeft());
     }, 1000);
     return () => clearTimeout(timer);
-  }, [timeLeft]);
+  }, [calculateTimeLeft]);
 
   const formatTimeLeft = ({ days, hours, minutes, seconds }) => {
     const pad = (num) => String(num).padStart(2, "0");
@@ -102,6 +103,16 @@ const Card = ({ imgSrc, title, startingBid, startTime, endTime, id, bids = [] })
       </div>
     </div>
   );
+};
+
+Card.propTypes = {
+  imgSrc: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  startingBid: PropTypes.number.isRequired,
+  startTime: PropTypes.string.isRequired,
+  endTime: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
+  bids: PropTypes.arrayOf(PropTypes.object)
 };
 
 export default Card;

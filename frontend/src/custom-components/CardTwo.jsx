@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { deleteAuction, republishAuction } from "@/store/slices/auctionSlice";
+import PropTypes from 'prop-types';
 
 const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
   const calculateTimeLeft = () => {
@@ -40,7 +41,7 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
     return () => clearTimeout(timer);
-  }, [timeLeft]);
+  }, [calculateTimeLeft]);
 
   const formatTimeLeft = ({ days, hours, minutes, seconds }) => {
     const pad = (num) => String(num).padStart(2, "0");
@@ -136,6 +137,15 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
       <Drawer id={id} openDrawer={openDrawer} setOpenDrawer={setOpenDrawer} />
     </>
   );
+};
+
+CardTwo.propTypes = {
+  imgSrc: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  startingBid: PropTypes.number.isRequired,
+  startTime: PropTypes.string.isRequired,
+  endTime: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired
 };
 
 export default CardTwo;
