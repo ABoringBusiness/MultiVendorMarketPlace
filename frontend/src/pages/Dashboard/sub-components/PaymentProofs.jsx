@@ -10,7 +10,7 @@ import { FaTrashAlt, FaEdit } from "react-icons/fa";
 import PropTypes from 'prop-types';
 
 const PaymentProofs = () => {
-  const { paymentProofs, singlePaymentProof } = useSelector(
+  const { paymentProofs } = useSelector(
     (state) => state.superAdmin
   );
   const [openDrawer, setOpenDrawer] = useState(false);

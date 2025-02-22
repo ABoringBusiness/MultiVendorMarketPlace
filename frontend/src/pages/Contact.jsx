@@ -36,7 +36,7 @@ const Contact = () => {
         setLoading(false);
         navigateTo("/");
       })
-      .catch((err) => {
+      .catch(() => {
         toast.error("Failed to send message.");
         setLoading(false);
       });
