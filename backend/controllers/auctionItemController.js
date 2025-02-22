@@ -145,14 +145,12 @@ export const getMyAuctionItems = catchAsyncErrors(async (req, res, next) => {
 
 export const removeFromAuction = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid Id format.", 400));
-  }
-  const auctionItem = await Auction.findById(id);
-  if (!auctionItem) {
+  const deleted = await AuctionModel.delete(id);
+  
+  if (!deleted) {
     return next(new ErrorHandler("Auction not found.", 404));
   }
-  await auctionItem.deleteOne();
+
   res.status(200).json({
     success: true,
     message: "Auction item deleted successfully.",
@@ -161,28 +159,30 @@ export const removeFromAuction = catchAsyncErrors(async (req, res, next) => {
 
 export const republishItem = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid Id format.", 400));
-  }
-  let auctionItem = await Auction.findById(id);
+  const auctionItem = await AuctionModel.findById(id);
+
   if (!auctionItem) {
     return next(new ErrorHandler("Auction not found.", 404));
   }
+
   if (!req.body.startTime || !req.body.endTime) {
     return next(
       new ErrorHandler("Starttime and Endtime for republish is mandatory.")
     );
   }
-  if (new Date(auctionItem.endTime) > Date.now()) {
+
+  if (new Date(auctionItem.end_time) > Date.now()) {
     return next(
       new ErrorHandler("Auction is already active, cannot republish", 400)
     );
   }
-  let data = {
-    startTime: new Date(req.body.startTime),
-    endTime: new Date(req.body.endTime),
+
+  const data = {
+    start_time: new Date(req.body.startTime),
+    end_time: new Date(req.body.endTime),
   };
-  if (data.startTime < Date.now()) {
+
+  if (data.start_time < Date.now()) {
     return next(
       new ErrorHandler(
         "Auction starting time must be greater than present time",
@@ -190,7 +190,8 @@ export const republishItem = catchAsyncErrors(async (req, res, next) => {
       )
     );
   }
-  if (data.startTime >= data.endTime) {
+
+  if (data.start_time >= data.end_time) {
     return next(
       new ErrorHandler(
         "Auction starting time must be less than ending time.",
@@ -199,35 +200,33 @@ export const republishItem = catchAsyncErrors(async (req, res, next) => {
     );
   }
 
-  if (auctionItem.highestBidder) {
-    const highestBidder = await User.findById(auctionItem.highestBidder);
-    highestBidder.moneySpent -= auctionItem.currentBid;
-    highestBidder.auctionsWon -= 1;
-    highestBidder.save();
+  // Update highest bidder stats if exists
+  if (auctionItem.highest_bidder) {
+    await UserModel.updateStats(auctionItem.highest_bidder, {
+      money_spent: -auctionItem.current_bid,
+      auctions_won: -1
+    });
   }
 
-  data.bids = [];
-  data.commissionCalculated = false;
-  data.currentBid = 0;
-  data.highestBidder = null;
-  auctionItem = await Auction.findByIdAndUpdate(id, data, {
-    new: true,
-    runValidators: true,
-    useFindAndModify: false,
+  // Reset auction data
+  const updatedAuction = await AuctionModel.update(id, {
+    ...data,
+    current_bid: 0,
+    highest_bidder: null,
+    commission_calculated: false
   });
-  await Bid.deleteMany({ auctionItem: auctionItem._id });
-  const createdBy = await User.findByIdAndUpdate(
-    req.user._id,
-    { unpaidCommission: 0 },
-    {
-      new: true,
-      runValidators: false,
-      useFindAndModify: false,
-    }
-  );
+
+  // Delete all bids for this auction
+  await BidModel.deleteByAuctionId(id);
+
+  // Reset unpaid commission for the creator
+  const createdBy = await UserModel.update(req.user.id, {
+    unpaid_commission: 0
+  });
+
   res.status(200).json({
     success: true,
-    auctionItem,
+    auctionItem: updatedAuction,
     message: `Auction republished and will be active on ${req.body.startTime}`,
     createdBy,
   });
@@ -235,26 +234,27 @@ export const republishItem = catchAsyncErrors(async (req, res, next) => {
 
 export const preventAuctionSniping = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid Id format.", 400));
-  }
-  const auctionItem = await Auction.findById(id);
+  const auctionItem = await AuctionModel.findById(id);
+
   if (!auctionItem) {
     return next(new ErrorHandler("Auction not found.", 404));
   }
 
-  const timeLeft = new Date(auctionItem.endTime) - Date.now();
+  const timeLeft = new Date(auctionItem.end_time) - Date.now();
   const fiveMinutes = 5 * 60 * 1000;
   const thirtyMinutes = 30 * 60 * 1000;
 
   if (timeLeft <= fiveMinutes) {
-    auctionItem.endTime = new Date(auctionItem.endTime.getTime() + thirtyMinutes);
-    await auctionItem.save();
+    const newEndTime = new Date(auctionItem.end_time).getTime() + thirtyMinutes;
+    const updatedAuction = await AuctionModel.update(id, {
+      end_time: new Date(newEndTime)
+    });
+
     console.log("Auction end time extended by 30 minutes.");
     return res.status(200).json({
       success: true,
       message: "Auction end time extended by 30 minutes to prevent sniping.",
-      auctionItem,
+      auctionItem: updatedAuction,
     });
   } else {
     console.log("No extension needed.");
