@@ -27,7 +27,7 @@ const mockSupabase = {
     }),
     signOut: jest.fn().mockResolvedValue({ error: null })
   },
-  from: jest.fn(() => ({
+  from: jest.fn().mockImplementation(() => ({
     insert: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     update: jest.fn().mockReturnThis(),
@@ -53,21 +53,19 @@ jest.mock('../database/connection.js', () => ({
 }));
 
 // Mock UserModel
-const mockUserModel = {
-  findByEmail: jest.fn().mockResolvedValue(null),
-  create: jest.fn().mockImplementation(data => Promise.resolve({
-    id: data.id || 'test-user-id',
-    email: data.email,
-    role: data.role,
-    name: data.name,
-    created_at: new Date().toISOString()
-  })),
-  findById: jest.fn().mockResolvedValue(null),
-  update: jest.fn().mockResolvedValue(null)
-};
-
 jest.mock('../models/supabase/userModel.js', () => ({
-  UserModel: mockUserModel
+  UserModel: {
+    findByEmail: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockImplementation(data => Promise.resolve({
+      id: data.id || 'test-user-id',
+      email: data.email,
+      role: data.role,
+      name: data.name,
+      created_at: new Date().toISOString()
+    })),
+    findById: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue(null)
+  }
 }));
 
 // Mock Stripe
