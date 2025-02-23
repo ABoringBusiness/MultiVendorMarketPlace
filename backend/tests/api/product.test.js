@@ -241,4 +241,3 @@ describe('Product API', () => {
     });
   });
 });
-});
