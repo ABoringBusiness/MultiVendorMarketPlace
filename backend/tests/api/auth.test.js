@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import { ROLES } from '../../constants/roles.js';
 import authRouter from '../../router/auth.js';
 import { errorMiddleware } from '../../middlewares/error.js';
-import { UserModel } from '../../models/supabase/userModel.js';
+// UserModel is mocked in setup.js
 
 // Create Express app for testing
 const app = express();

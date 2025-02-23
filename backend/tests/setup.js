@@ -37,15 +37,19 @@ jest.mock('../database/connection.js', () => ({
 }));
 
 // Mock UserModel
-const mockUserModel = {
-  findByEmail: jest.fn().mockResolvedValue(null),
-  create: jest.fn().mockImplementation(data => Promise.resolve({ id: 'test-user-id', ...data })),
-  findById: jest.fn().mockResolvedValue(null),
-  update: jest.fn().mockResolvedValue(null)
-};
-
 jest.mock('../models/supabase/userModel.js', () => ({
-  UserModel: mockUserModel
+  UserModel: {
+    findByEmail: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockImplementation(data => Promise.resolve({
+      id: 'test-user-id',
+      email: data.email,
+      role: data.role,
+      name: data.name,
+      created_at: new Date().toISOString()
+    })),
+    findById: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue(null)
+  }
 }));
 
 // Mock Stripe
