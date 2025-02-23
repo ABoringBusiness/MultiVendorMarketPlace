@@ -16,6 +16,7 @@ import superAdminRouter from "./router/superAdminRoutes.js";
 import productRouter from "./router/productRoutes.js";
 import sellerRouter from "./router/sellerRoutes.js";
 import orderRouter from "./router/orderRoutes.js";
+import adminRouter from "./router/adminRoutes.js";
 import { endedAuctionCron } from "./automation/endedAuctionCron.js";
 import { verifyCommissionCron } from "./automation/verifyCommissionCron.js";
 import { checkReportedAuctionsCron } from "./automation/AuctionReportsCron.js"
@@ -52,6 +53,7 @@ app.use("/api/v1/report", reportRoutes);
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/sellers", sellerRouter);
 app.use("/api/v1/orders", orderRouter);
+app.use("/api/v1/admin", adminRouter);
 
 
 endedAuctionCron();
