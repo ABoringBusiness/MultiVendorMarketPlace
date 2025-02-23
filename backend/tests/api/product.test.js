@@ -1,4 +1,3 @@
-import { jest, describe, it, expect, beforeAll, beforeEach } from '@jest/globals';
 import { jest, describe, it, expect, beforeAll, beforeEach, afterAll } from '@jest/globals';
 import request from 'supertest';
 import { app } from '../../app.js';

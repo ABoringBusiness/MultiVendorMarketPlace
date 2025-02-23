@@ -22,10 +22,17 @@ afterAll(async () => {
   jest.clearAllMocks();
   
   // Clear test data
-  await supabase.from('orders').delete().neq('id', '0');
-  await supabase.from('products').delete().neq('id', '0');
-  await supabase.from('reviews').delete().neq('id', '0');
-  await supabase.from('users').delete().neq('id', '0');
+  try {
+    await supabase.from('orders').delete().neq('id', '0');
+    await supabase.from('products').delete().neq('id', '0');
+    await supabase.from('reviews').delete().neq('id', '0');
+    await supabase.from('users').delete().neq('id', '0');
+  } catch (error) {
+    console.error('Error cleaning up test data:', error);
+  }
+  
+  // Close database connection
+  await supabase.removeAllChannels();
 });
 
 // Mock Supabase client
