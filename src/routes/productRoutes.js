@@ -50,7 +50,7 @@ router.post("/", authMiddleware, createProduct);
  * @swagger
  * /products:
  *   get:
- *     summary: Get all products (filter by category optional)
+ *     summary: Get all products (filter by category or seller optional)
  *     tags: [Product]
  *     parameters:
  *       - in: query
@@ -58,6 +58,11 @@ router.post("/", authMiddleware, createProduct);
  *         schema:
  *           type: string
  *         description: Filter products by category
+ *       - in: query
+ *         name: sellerId
+ *         schema:
+ *           type: string
+ *         description: Filter products by seller
  *     responses:
  *       200:
  *         description: List of products
@@ -90,6 +95,12 @@ router.get("/:id", getProductById);
  *     tags: [Product]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -121,6 +132,12 @@ router.put("/:id", authMiddleware, updateProduct);
  *     tags: [Product]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Product deleted successfully
