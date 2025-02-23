@@ -1,9 +1,10 @@
-const request = require('supertest');
-const express = require('express');
-const cookieParser = require('cookie-parser');
-const { ROLES } = require('../../constants/roles.js');
-const authRouter = require('../../router/auth.js');
-const { errorMiddleware } = require('../../middlewares/error.js');
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import request from 'supertest';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import { ROLES } from '../../constants/roles.js';
+import authRouter from '../../router/auth.js';
+import { errorMiddleware } from '../../middlewares/error.js';
 // UserModel is mocked in setup.js
 
 // Create Express app for testing

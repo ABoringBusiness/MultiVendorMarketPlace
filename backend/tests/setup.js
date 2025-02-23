@@ -1,6 +1,8 @@
-require('dotenv').config();
+import { jest } from '@jest/globals';
+import { config } from 'dotenv';
 
-const mockSupabase = {
+// Load environment variables
+config();
 
 // Mock Supabase client
 const mockSupabase = {
