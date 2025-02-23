@@ -1,4 +1,5 @@
 import { supabase } from '../database/connection.js';
+import { ROLES } from '../constants/roles.js';
 
 export const isAuthenticated = async (req, res, next) => {
   try {
@@ -15,12 +16,12 @@ export const isAuthenticated = async (req, res, next) => {
       const mockUsers = {
         'mock-seller-token': {
           id: 'seller-id',
-          role: 'seller',
+          role: ROLES.SELLER,
           email: 'seller@test.com'
         },
         'mock-admin-token': {
           id: 'admin-id',
-          role: 'admin',
+          role: ROLES.ADMIN,
           email: 'admin@test.com'
         }
       };
@@ -70,4 +71,16 @@ export const isAuthenticated = async (req, res, next) => {
       error: error.message
     });
   }
+};
+
+export const isAuthorized = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to perform this action'
+      });
+    }
+    next();
+  };
 };
