@@ -223,7 +223,9 @@ const mockSupabase = {
               result = result.filter(item => item.status === 'active');
             }
             return callback({ data: result || [], error: null });
-          }
+          },
+          orderBy: () => chain,
+          limit: () => chain
         };
         return chain;
       }),
@@ -238,6 +240,9 @@ const mockSupabase = {
                   let result = [...products];
                   for (const { field, value } of conditions) {
                     result = result.filter(item => item[field] === value);
+                  }
+                  if (!conditions.some(c => c.field === 'status')) {
+                    result = result.filter(item => item.status === 'active');
                   }
                   if (result.length > 0) {
                     const index = products.findIndex(p => p.id === result[0].id);
