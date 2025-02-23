@@ -29,7 +29,8 @@ router.post('/register', catchAsyncErrors(async (req, res, next) => {
       options: {
         data: {
           role: ROLE_MAPPINGS[req.body.role] || req.body.role
-        }
+        },
+        emailRedirectTo: `${process.env.FRONTEND_URL}/auth/callback`
       }
     });
     if (authError) throw authError;
@@ -46,9 +47,10 @@ router.post('/register', catchAsyncErrors(async (req, res, next) => {
     
     res.status(201).json({
       success: true,
-      message: "User Registered.",
+      message: "Registration successful. Please check your email to confirm your account.",
       user,
-      token: authData.session?.access_token
+      token: authData.session?.access_token,
+      confirmEmail: true
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
@@ -63,23 +65,43 @@ router.post('/login', catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Please fill full form."));
     }
 
-    // Sign in with Supabase Auth
-    const { data: { user, session }, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    if (authError) throw authError;
+    try {
+      // Sign in with Supabase Auth
+      const { data: { user, session }, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-    if (!user) {
-      return next(new ErrorHandler("Invalid credentials.", 401));
+      if (authError) {
+        if (authError.message.includes('Email not confirmed')) {
+          return next(new ErrorHandler("Please confirm your email before logging in.", 401));
+        }
+        throw authError;
+      }
+
+      if (!user) {
+        return next(new ErrorHandler("Invalid credentials.", 401));
+      }
+
+      // Get user data from our database
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      res.status(200).json({
+        success: true,
+        message: "Login successful.",
+        user: dbUser,
+        token: session.access_token
+      });
+    } catch (error) {
+      if (error.message.includes('rate limit')) {
+        return next(new ErrorHandler("Too many login attempts. Please try again later.", 429));
+      }
+      throw error;
     }
-
-    res.status(200).json({
-      success: true,
-      message: "Login successfully.",
-      user,
-      token: session.access_token
-    });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }
