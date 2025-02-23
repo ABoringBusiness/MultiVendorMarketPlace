@@ -61,6 +61,7 @@ const filterProducts = (items, conditions) => {
   let result = [...items];
   
   if (!conditions || conditions.length === 0) {
+    console.log('No conditions to filter, returning all items');
     return result;
   }
 
@@ -72,7 +73,8 @@ const filterProducts = (items, conditions) => {
         field: condition.field,
         itemValue: item[condition.field],
         conditionValue: condition.value,
-        matches
+        matches,
+        item
       });
       return matches;
     });
@@ -138,6 +140,7 @@ const createQueryBuilder = (tableName) => {
       
       return Promise.resolve().then(() => {
         if (state.returnValue) {
+          console.log('Returning inserted/updated item:', state.returnValue);
           return { data: state.returnValue, error: null };
         }
         if (state.updateData && result.length > 0) {
@@ -153,6 +156,7 @@ const createQueryBuilder = (tableName) => {
             return { data: updatedItem, error: null };
           }
         }
+        console.log('Returning single result:', result[0] || null);
         return { 
           data: result[0] || null,
           error: result.length === 0 ? { message: 'Not found' } : null
