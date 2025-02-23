@@ -63,7 +63,6 @@ app.use("/api/v1/reviews", reviewRouter);
 endedAuctionCron();
 verifyCommissionCron();
 checkReportedAuctionsCron();
-connection();
 app.use(errorMiddleware);
 
 export { app };

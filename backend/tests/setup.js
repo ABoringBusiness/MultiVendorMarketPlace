@@ -4,6 +4,17 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// Mock cron jobs
+jest.mock('../automation/endedAuctionCron.js', () => ({
+  endedAuctionCron: jest.fn()
+}));
+jest.mock('../automation/verifyCommissionCron.js', () => ({
+  verifyCommissionCron: jest.fn()
+}));
+jest.mock('../automation/AuctionReportsCron.js', () => ({
+  checkReportedAuctionsCron: jest.fn()
+}));
+
 // Mock Supabase client
 const mockSupabase = {
   auth: {
