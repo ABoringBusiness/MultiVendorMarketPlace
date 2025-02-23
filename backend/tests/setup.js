@@ -69,7 +69,6 @@ const createProductQueryBuilder = () => {
       const newProduct = {
         id: 'new-id',
         ...data,
-        status: 'active',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -92,6 +91,18 @@ const createProductQueryBuilder = () => {
       let result = [...products];
       for (const { field, value } of conditions) {
         result = result.filter(item => item[field] === value);
+      }
+      if (updateData && result.length > 0) {
+        const index = products.findIndex(p => p.id === result[0].id);
+        if (index !== -1) {
+          const updatedItem = {
+            ...products[index],
+            ...updateData,
+            updated_at: new Date().toISOString()
+          };
+          products[index] = updatedItem;
+          return Promise.resolve({ data: updatedItem, error: null });
+        }
       }
       return Promise.resolve({ 
         data: result[0] || null,
