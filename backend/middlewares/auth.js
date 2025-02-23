@@ -5,24 +5,32 @@ import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 
 export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
   try {
-    // Get session from Supabase Auth
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-      return next(new ErrorHandler("User not authenticated.", 401));
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next(new ErrorHandler("No token provided.", 401));
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Verify token with Supabase
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authUser) {
+      return next(new ErrorHandler("Invalid or expired token.", 401));
     }
 
     // Get user data from our users table
-    const { data: user, error: userError } = await supabase
+    const { data: dbUser, error: userError } = await supabase
       .from('users')
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single();
 
-    if (userError || !user) {
+    if (userError || !dbUser) {
       return next(new ErrorHandler("User not found.", 404));
     }
 
-    req.user = user;
+    req.user = dbUser;
     next();
   } catch (error) {
     return next(new ErrorHandler(error.message, 401));
