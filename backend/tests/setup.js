@@ -270,10 +270,7 @@ const mockSupabase = {
           },
           orderBy: () => chain,
           limit: () => chain,
-          select: () => chain,
-          in: () => chain,
-          match: () => chain,
-          ilike: () => chain
+          select: () => chain
         };
         return chain;
       }),
@@ -306,9 +303,7 @@ const mockSupabase = {
                   }
                   return Promise.resolve({ data: null, error: { message: 'Not found' } });
                 })
-              }),
-              match: () => chain,
-              ilike: () => chain
+              })
             };
           }
         };
