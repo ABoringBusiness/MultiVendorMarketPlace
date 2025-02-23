@@ -17,9 +17,12 @@ export const listProducts = async (req, res) => {
       });
     }
 
+    // Ensure we have an array even if data is null
+    const productList = Array.isArray(products) ? products : [];
+
     return res.status(200).json({
       success: true,
-      products: products || []
+      products: productList
     });
   } catch (error) {
     console.error('Error in listProducts:', error);
