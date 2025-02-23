@@ -3,16 +3,11 @@ import { ROLES } from '../constants/roles.js';
 
 export const listProducts = async (req, res) => {
   try {
-    // Build query
-    const query = supabase
+    // Build and execute query
+    const { data: products, error } = await supabase
       .from('products')
-      .select('*');
-
-    // Add status filter
-    query.eq('status', 'active');
-
-    // Execute query
-    const { data: products, error } = await query;
+      .select('*')
+      .eq('status', 'active');
 
     if (error) {
       console.error('Error fetching products:', error);
@@ -27,7 +22,6 @@ export const listProducts = async (req, res) => {
     const productList = Array.isArray(products) ? products : [];
     
     // Log for debugging
-    console.log('Query executed:', query);
     console.log('Products fetched:', productList);
 
     return res.status(200).json({
@@ -48,19 +42,15 @@ export const getProduct = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Build query
-    const query = supabase
+    // Build and execute query
+    const { data: product, error } = await supabase
       .from('products')
       .select('*')
       .eq('id', id)
       .eq('status', 'active')
       .single();
 
-    // Execute query
-    const { data: product, error } = await query;
-
     // Log for debugging
-    console.log('Query executed:', query);
     console.log('Product fetched:', product);
 
     if (error || !product) {
