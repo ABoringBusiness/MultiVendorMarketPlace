@@ -1,17 +1,20 @@
+import { jest } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { supabase } from '../../database/connection.js';
 import { ROLES } from '../../constants/roles.js';
 import authRouter from '../../router/auth.js';
+import { errorMiddleware } from '../../middlewares/error.js';
 
 const app = express();
 app.use(express.json());
 app.use('/api/v1/auth', authRouter);
 
 describe('Authentication API', () => {
-  beforeEach(async () => {
-    // Clear test data
-    await supabase.from('users').delete().neq('id', '0');
+  beforeEach(() => {
+    // Reset mock implementations
+    jest.clearAllMocks();
   });
 
   describe('POST /auth/register', () => {
