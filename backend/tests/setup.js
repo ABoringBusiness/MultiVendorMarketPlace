@@ -206,7 +206,16 @@ const mockSupabase = {
       if (!user) {
         return Promise.resolve({ data: null, error: { message: 'Invalid token' } });
       }
-      return Promise.resolve({ data: { user: { id: user.id, role: user.role } }, error: null });
+      return Promise.resolve({ 
+        data: { 
+          user: { 
+            id: user.id, 
+            role: user.role,
+            email: user.email 
+          } 
+        }, 
+        error: null 
+      });
     })
   },
   from: (table) => {
