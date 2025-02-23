@@ -60,9 +60,12 @@ app.use("/api/v1/search", searchRouter);
 app.use("/api/v1/reviews", reviewRouter);
 
 
-endedAuctionCron();
-verifyCommissionCron();
-checkReportedAuctionsCron();
+// Only run crons in production
+if (process.env.NODE_ENV === 'production') {
+  endedAuctionCron();
+  verifyCommissionCron();
+  checkReportedAuctionsCron();
+}
 app.use(errorMiddleware);
 
 export { app };
