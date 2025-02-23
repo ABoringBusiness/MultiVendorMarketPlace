@@ -58,6 +58,72 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+// Create a query builder that maintains proper chaining
+const createQueryBuilder = () => {
+  const chain = {
+    select: jest.fn().mockReturnThis(),
+    insert: jest.fn().mockImplementation((data) => {
+      const newProduct = {
+        id: 'new-id',
+        ...data,
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      products.push(newProduct);
+      return {
+        select: () => ({
+          single: () => Promise.resolve({ data: newProduct, error: null })
+        })
+      };
+    }),
+    update: jest.fn().mockImplementation((data) => {
+      updateData = data;
+      return chain;
+    }),
+    eq: jest.fn().mockImplementation((field, value) => {
+      conditions.push({ field, value });
+      return chain;
+    }),
+    single: jest.fn().mockImplementation(() => {
+      let result = [...products];
+      for (const { field, value } of conditions) {
+        result = result.filter(item => item[field] === value);
+      }
+      if (!conditions.some(c => c.field === 'status')) {
+        result = result.filter(item => item.status === 'active');
+      }
+      if (updateData && result.length > 0) {
+        const index = products.findIndex(p => p.id === result[0].id);
+        if (index !== -1) {
+          const updatedItem = {
+            ...products[index],
+            ...updateData,
+            updated_at: new Date().toISOString()
+          };
+          products[index] = updatedItem;
+          return Promise.resolve({ data: updatedItem, error: null });
+        }
+      }
+      return Promise.resolve({ 
+        data: result[0] || null,
+        error: result.length === 0 ? { message: 'Not found' } : null
+      });
+    }),
+    then: jest.fn().mockImplementation((callback) => {
+      let result = [...products];
+      for (const { field, value } of conditions) {
+        result = result.filter(item => item[field] === value);
+      }
+      if (!conditions.some(c => c.field === 'status')) {
+        result = result.filter(item => item.status === 'active');
+      }
+      return callback({ data: result || [], error: null });
+    })
+  };
+  return chain;
+};
+
 // Mock Supabase client
 const mockSupabase = {
   auth: {
@@ -101,84 +167,7 @@ const mockSupabase = {
       };
     }
 
-    const queryBuilder = {
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockImplementation((data) => {
-        const newProduct = {
-          id: 'new-id',
-          ...data,
-          status: 'active',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        products.push(newProduct);
-        return {
-          select: () => ({
-            single: () => Promise.resolve({ data: newProduct, error: null })
-          })
-        };
-      }),
-      update: jest.fn().mockImplementation((data) => {
-        updateData = data;
-        return {
-          eq: (field, value) => {
-            conditions.push({ field, value });
-            return {
-              select: () => ({
-                single: () => {
-                  let result = [...products];
-                  for (const { field, value } of conditions) {
-                    result = result.filter(item => item[field] === value);
-                  }
-                  if (result.length > 0) {
-                    const index = products.findIndex(p => p.id === result[0].id);
-                    if (index !== -1) {
-                      const updatedItem = {
-                        ...products[index],
-                        ...updateData,
-                        updated_at: new Date().toISOString()
-                      };
-                      products[index] = updatedItem;
-                      return Promise.resolve({ data: updatedItem, error: null });
-                    }
-                  }
-                  return Promise.resolve({ data: null, error: { message: 'Not found' } });
-                }
-              })
-            };
-          }
-        };
-      }),
-      eq: jest.fn().mockImplementation((field, value) => {
-        conditions.push({ field, value });
-        return queryBuilder;
-      }),
-      single: jest.fn().mockImplementation(() => {
-        let result = [...products];
-        for (const { field, value } of conditions) {
-          result = result.filter(item => item[field] === value);
-        }
-        if (!conditions.some(c => c.field === 'status')) {
-          result = result.filter(item => item.status === 'active');
-        }
-        return Promise.resolve({ 
-          data: result[0] || null,
-          error: result.length === 0 ? { message: 'Not found' } : null
-        });
-      }),
-      then: jest.fn().mockImplementation((callback) => {
-        let result = [...products];
-        for (const { field, value } of conditions) {
-          result = result.filter(item => item[field] === value);
-        }
-        if (!conditions.some(c => c.field === 'status')) {
-          result = result.filter(item => item.status === 'active');
-        }
-        return callback({ data: result || [], error: null });
-      })
-    };
-
-    return queryBuilder;
+    return createQueryBuilder();
   })
 };
 
