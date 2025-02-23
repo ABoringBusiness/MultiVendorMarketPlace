@@ -174,12 +174,7 @@ const createQueryBuilder = (tableName) => {
     single: () => {
       state.isSingle = true;
       console.log('Setting single mode');
-      return {
-        then: (callback) => {
-          console.log('Executing single query');
-          return Promise.resolve(executeQuery()).then(callback);
-        }
-      };
+      return chain;
     },
     then: (callback) => {
       console.log('Executing query');
