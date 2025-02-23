@@ -108,7 +108,11 @@ const mockSupabase = {
           updated_at: new Date().toISOString()
         };
         products.push(newProduct);
-        return queryBuilder;
+        return {
+          select: () => ({
+            single: () => Promise.resolve({ data: newProduct, error: null })
+          })
+        };
       }),
       update: jest.fn().mockImplementation((data) => {
         updateData = data;
@@ -138,6 +142,11 @@ const mockSupabase = {
             products[index] = updatedItem;
             return Promise.resolve({ data: updatedItem, error: null });
           }
+        }
+
+        // For single queries, filter by status='active' by default unless explicitly querying for status
+        if (!conditions.some(c => c.field === 'status')) {
+          result = result.filter(item => item.status === 'active');
         }
 
         return Promise.resolve({ 
