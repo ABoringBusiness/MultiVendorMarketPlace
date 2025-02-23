@@ -177,7 +177,21 @@ export const disableProduct = async (req, res) => {
       });
     }
 
-    const { data: product, error } = await supabase
+    // Check if product exists
+    const { data: product, error: fetchError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    const { data: disabledProduct, error } = await supabase
       .from('products')
       .update({ status: 'disabled' })
       .eq('id', id)
@@ -195,7 +209,7 @@ export const disableProduct = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      product
+      product: disabledProduct
     });
   } catch (error) {
     console.error('Error in disableProduct:', error);

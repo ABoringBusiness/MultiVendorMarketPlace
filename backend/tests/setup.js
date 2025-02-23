@@ -27,19 +27,6 @@ const testProducts = [
   }
 ];
 
-const testUsers = {
-  'mock-seller-token': {
-    id: 'seller-id',
-    role: ROLES.SELLER,
-    email: 'seller@test.com'
-  },
-  'mock-admin-token': {
-    id: 'admin-id',
-    role: ROLES.ADMIN,
-    email: 'admin@test.com'
-  }
-};
-
 // Mock Supabase client
 const mockSupabase = {
   auth: {
@@ -57,10 +44,9 @@ const mockSupabase = {
     })
   },
   from: jest.fn().mockImplementation((table) => {
-    const mockData = {
-      products: testProducts,
-      users: testUsers
-    };
+    let queryData = table === 'products' ? [...testProducts] : [];
+    let conditions = [];
+    let updateData = {};
 
     const queryBuilder = {
       select: jest.fn().mockReturnThis(),
@@ -71,6 +57,7 @@ const mockSupabase = {
           status: 'active',
           seller_id: 'seller-id'
         };
+        queryData = [newProduct];
         return {
           select: () => ({
             single: () => Promise.resolve({ data: newProduct, error: null })
@@ -78,39 +65,35 @@ const mockSupabase = {
         };
       }),
       update: jest.fn().mockImplementation((data) => {
-        const updatedProduct = {
-          ...testProducts[0],
-          ...data
-        };
-        return {
-          eq: () => ({
-            select: () => ({
-              single: () => Promise.resolve({ data: updatedProduct, error: null })
-            })
-          })
-        };
-      }),
-      eq: jest.fn().mockImplementation((field, value) => {
-        if (table === 'products') {
-          const product = testProducts.find(p => p[field] === value);
-          if (product) {
-            queryBuilder.single = () => Promise.resolve({ data: product, error: null });
-            return queryBuilder;
-          }
-          queryBuilder.single = () => Promise.resolve({ data: null, error: null });
-          return queryBuilder;
-        }
+        updateData = data;
         return queryBuilder;
       }),
-      neq: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockImplementation((field, value) => {
+        conditions.push({ field, value, op: 'eq' });
+        return queryBuilder;
+      }),
       single: jest.fn().mockImplementation(() => {
-        return Promise.resolve({ data: null, error: null });
+        const filtered = queryData.filter(item =>
+          conditions.every(({ field, value }) => item[field] === value)
+        );
+
+        if (Object.keys(updateData).length > 0) {
+          if (filtered.length > 0) {
+            const updatedItem = { ...filtered[0], ...updateData };
+            return Promise.resolve({ data: updatedItem, error: null });
+          }
+        }
+
+        return Promise.resolve({ 
+          data: filtered[0] || null,
+          error: filtered.length === 0 ? { message: 'Not found' } : null
+        });
       }),
       then: jest.fn().mockImplementation((callback) => {
-        if (table === 'products') {
-          return callback({ data: testProducts, error: null });
-        }
-        return callback({ data: [], error: null });
+        const filtered = queryData.filter(item =>
+          conditions.every(({ field, value }) => item[field] === value)
+        );
+        return callback({ data: filtered, error: null });
       })
     };
 
