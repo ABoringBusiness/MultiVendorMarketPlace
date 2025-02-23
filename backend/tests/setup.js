@@ -1,6 +1,5 @@
+import { jest } from '@jest/globals';
 import { config } from 'dotenv';
-import { createClient } from '@supabase/supabase-js';
-import sinon from 'sinon';
 import Stripe from 'stripe';
 
 // Load environment variables
@@ -9,45 +8,62 @@ config();
 // Mock Stripe
 const stripeMock = {
   paymentIntents: {
-    create: sinon.stub().resolves({
+    create: jest.fn().mockResolvedValue({
       id: 'pi_test',
       client_secret: 'test_secret'
     })
   },
   webhooks: {
-    constructEvent: sinon.stub().returns({
+    constructEvent: jest.fn().mockReturnValue({
       type: 'payment_intent.succeeded',
       data: { object: { metadata: { order_id: 'test_order' } } }
     })
   }
 };
 
-// Replace Stripe instance with mock
-sinon.stub(Stripe.prototype, 'constructor').returns(stripeMock);
+// Mock Supabase client
+jest.mock('../database/connection.js', () => ({
+  supabase: {
+    auth: {
+      signUp: jest.fn().mockResolvedValue({
+        data: {
+          user: { id: 'test-user-id', email: 'test@example.com' },
+          session: { access_token: 'test-token' }
+        },
+        error: null
+      }),
+      signInWithPassword: jest.fn().mockResolvedValue({
+        data: {
+          user: { id: 'test-user-id', email: 'test@example.com' },
+          session: { access_token: 'test-token' }
+        },
+        error: null
+      }),
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+        error: null
+      }),
+      signOut: jest.fn().mockResolvedValue({ error: null })
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null })
+    })),
+    storage: {
+      from: jest.fn()
+    }
+  }
+}));
 
-// Initialize Supabase client for tests
-export const supabase = createClient(
-  process.env.SUPABASE_URL || 'http://localhost:54321',
-  process.env.SUPABASE_ANON_KEY || 'test-anon-key'
-);
+// Mock Stripe
+jest.mock('stripe', () => jest.fn(() => stripeMock));
 
-// Mock Supabase responses
-const supabaseMock = {
-  auth: {
-    signUp: sinon.stub().resolves({ user: { id: 'test_user' }, session: { access_token: 'test_token' } }),
-    signIn: sinon.stub().resolves({ user: { id: 'test_user' }, session: { access_token: 'test_token' } })
-  },
-  from: () => ({
-    insert: sinon.stub().resolves({ data: [{ id: 'test_id' }] }),
-    select: sinon.stub().resolves({ data: [] }),
-    delete: sinon.stub().resolves({ data: [] })
-  })
-};
-
-// Replace Supabase client with mock
-sinon.stub(supabase, 'constructor').returns(supabaseMock);
-
-// Clean up mocks after tests
-export const cleanupTestData = async () => {
-  sinon.restore();
-};
+// Reset all mocks before each test
+beforeEach(() => {
+  jest.clearAllMocks();
+});
