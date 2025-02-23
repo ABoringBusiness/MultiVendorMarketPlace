@@ -55,39 +55,6 @@ beforeEach(() => {
   console.log('Test data initialized:', products);
 });
 
-// Helper function to filter products based on conditions
-const filterProducts = (items, conditions) => {
-  console.log('Filtering products:', { items, conditions });
-  let result = [...items];
-  
-  if (!conditions || conditions.length === 0) {
-    console.log('No conditions to filter, returning all items:', result);
-    return result;
-  }
-
-  // Apply all conditions
-  for (const condition of conditions) {
-    console.log('Applying condition:', condition);
-    result = result.filter(item => {
-      const itemValue = String(item[condition.field]);
-      const conditionValue = String(condition.value);
-      const matches = itemValue === conditionValue;
-      console.log('Checking item:', { 
-        field: condition.field,
-        itemValue,
-        conditionValue,
-        matches,
-        item
-      });
-      return matches;
-    });
-    console.log(`After applying condition ${condition.field}=${condition.value}:`, result);
-  }
-
-  console.log('Final filter result:', result);
-  return result;
-};
-
 // Create a query builder that maintains proper chaining
 const createQueryBuilder = (tableName) => {
   console.log('Creating query builder for table:', tableName);
@@ -105,24 +72,34 @@ const createQueryBuilder = (tableName) => {
 
   const executeQuery = () => {
     console.log('Executing query with state:', state);
-    const items = state.table === 'products' ? products : [];
-    console.log('Items before filtering:', items);
-    
-    // Clone items to avoid modifying the original array
-    let result = [...items];
-    
-    // Apply conditions if any
-    if (state.conditions.length > 0) {
-      result = filterProducts(result, state.conditions);
-    }
-    
-    console.log('Query result:', result);
+    let result = [...products];
+    console.log('Initial result:', result);
 
+    // Apply conditions
+    if (state.conditions.length > 0) {
+      console.log('Applying conditions:', state.conditions);
+      for (const condition of state.conditions) {
+        result = result.filter(item => {
+          const matches = String(item[condition.field]) === String(condition.value);
+          console.log('Checking condition:', { 
+            field: condition.field, 
+            itemValue: item[condition.field], 
+            conditionValue: condition.value,
+            matches
+          });
+          return matches;
+        });
+      }
+    }
+    console.log('After applying conditions:', result);
+
+    // Handle insert
     if (state.returnValue) {
-      console.log('Returning inserted/updated item:', state.returnValue);
+      console.log('Returning inserted item:', state.returnValue);
       return { data: state.returnValue, error: null };
     }
 
+    // Handle update
     if (state.updateData && result.length > 0) {
       const index = products.findIndex(p => p.id === result[0].id);
       if (index !== -1) {
@@ -132,12 +109,13 @@ const createQueryBuilder = (tableName) => {
           updated_at: new Date().toISOString()
         };
         products[index] = updatedItem;
-        console.log('Updated product:', updatedItem);
+        console.log('Updated item:', updatedItem);
         return { data: updatedItem, error: null };
       }
-      return { data: null, error: { message: 'Product not found' } };
+      return { data: null, error: { message: 'Item not found' } };
     }
 
+    // Return results
     if (state.isSingle) {
       console.log('Returning single result:', result[0] || null);
       return { 
@@ -154,7 +132,6 @@ const createQueryBuilder = (tableName) => {
     select: (...fields) => {
       console.log('Selecting fields:', fields);
       state.selectedFields = fields.length ? fields.join(',') : '*';
-      console.log('Updated state after select:', state);
       return chain;
     },
     insert: (data) => {
@@ -166,51 +143,29 @@ const createQueryBuilder = (tableName) => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      if (state.table === 'products') {
-        products.push(newItem);
-        console.log('Added new product:', newItem);
-        state.returnValue = newItem;
-      }
-      console.log('Updated state after insert:', state);
+      products.push(newItem);
+      state.returnValue = newItem;
       return chain;
     },
     update: (data) => {
       console.log('Setting update data:', data);
       state.updateData = data;
-      console.log('Updated state after update:', state);
       return chain;
     },
     eq: (field, value) => {
       console.log('Adding condition:', { field, value });
       state.conditions.push({ field, value: String(value) });
-      console.log('Updated state after eq:', state);
       return chain;
     },
     single: () => {
       console.log('Setting single mode');
       state.isSingle = true;
-      console.log('Updated state after single:', state);
       return chain;
     },
     then: (callback) => {
-      console.log('Executing query with state:', state);
+      console.log('Executing query');
       const result = executeQuery();
-      console.log('Query execution result:', result);
-      
-      // Create a new state object for the next query
-      const newState = {
-        conditions: [],
-        updateData: null,
-        selectedFields: '*',
-        table: state.table,
-        returnValue: null,
-        isSingle: false
-      };
-      
-      // Reset state for next query
-      Object.assign(state, newState);
-      console.log('Reset state for next query:', state);
-      
+      console.log('Query result:', result);
       return Promise.resolve(result).then(callback);
     }
   };
@@ -259,9 +214,7 @@ const mockSupabase = {
         }))
       };
     }
-    const builder = createQueryBuilder(table);
-    console.log('Created query builder:', builder);
-    return builder;
+    return createQueryBuilder(table);
   }
 };
 
