@@ -47,6 +47,7 @@ let products = [];
 // Reset database before each test
 beforeEach(() => {
   products = [...initialProducts];
+  jest.clearAllMocks();
 });
 
 // Mock Supabase client
@@ -149,7 +150,8 @@ const mockSupabase = {
           result = result.filter(item => item[field] === value);
         }
 
-        return callback({ data: result, error: null });
+        // Always return at least an empty array
+        return callback({ data: result || [], error: null });
       })
     };
 
@@ -171,5 +173,9 @@ beforeEach(() => {
 // Export mock data for tests
 export const testData = {
   products: initialProducts,
-  users: mockUsers
+  users: mockUsers,
+  tokens: {
+    seller: 'mock-seller-token',
+    admin: 'mock-admin-token'
+  }
 };
