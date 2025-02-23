@@ -22,12 +22,7 @@ export const searchProducts = async (req, res) => {
     // Filter results in memory
     let filteredProducts = products || [];
 
-    // Apply category filter
-    if (category) {
-      filteredProducts = filteredProducts.filter(p => p.category_id === category);
-    }
-
-    // Apply price range filter
+    // Apply price range filter first
     if (min_price !== undefined && min_price !== '') {
       const minPriceNum = parseFloat(min_price);
       if (!isNaN(minPriceNum)) {
@@ -41,7 +36,12 @@ export const searchProducts = async (req, res) => {
       }
     }
 
-    // Apply text search filter last to ensure all other filters are applied first
+    // Apply category filter
+    if (category) {
+      filteredProducts = filteredProducts.filter(p => p.category_id === category);
+    }
+
+    // Apply text search filter last
     if (q) {
       const searchLower = q.toLowerCase();
       filteredProducts = filteredProducts.filter(p => 
