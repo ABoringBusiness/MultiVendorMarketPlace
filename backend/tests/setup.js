@@ -106,7 +106,7 @@ const mockSupabase = {
         },
         {
           id: '3',
-          title: 'Abstract Painting',
+          title: 'Abstract Art',
           description: 'Modern abstract art',
           price: 299.99,
           category_id: '123e4567-e89b-12d3-a456-426614174000',
