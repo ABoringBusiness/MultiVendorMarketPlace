@@ -45,11 +45,11 @@ export const disableSeller = catchAsyncErrors(async (req, res, next) => {
     // Update seller status
     const { data: updatedSeller, error } = await supabase
       .from('users')
-      .update([{
-        id,
+      .update({
         status: 'disabled',
         updated_at: new Date().toISOString()
-      }]);
+      })
+      .eq('id', id);
 
     if (error) {
       console.error('Error disabling seller:', error);
@@ -89,10 +89,20 @@ export const disableProduct = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Product not found.", 404));
   }
 
-  const updatedProduct = await ProductModel.update(id, {
-    status: 'disabled',
-    updated_at: new Date()
-  });
+  const { data: updatedProduct, error: updateError } = await supabase
+    .from('products')
+    .update({
+      status: 'disabled',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (updateError) {
+    console.error('Error updating product:', updateError);
+    return next(new ErrorHandler("Failed to update product", 500));
+  }
 
   // Notify seller
   const seller = await UserModel.findById(product.seller_id);
