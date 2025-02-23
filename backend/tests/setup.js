@@ -61,7 +61,7 @@ const filterProducts = (items, conditions) => {
   let result = [...items];
   
   if (!conditions || conditions.length === 0) {
-    console.log('No conditions to filter, returning all items');
+    console.log('No conditions to filter, returning all items:', result);
     return result;
   }
 
@@ -107,7 +107,15 @@ const createQueryBuilder = (tableName) => {
     console.log('Executing query with state:', state);
     const items = state.table === 'products' ? products : [];
     console.log('Items before filtering:', items);
-    const result = filterProducts(items, state.conditions);
+    
+    // Clone items to avoid modifying the original array
+    let result = [...items];
+    
+    // Apply conditions if any
+    if (state.conditions.length > 0) {
+      result = filterProducts(result, state.conditions);
+    }
+    
     console.log('Query result:', result);
 
     if (state.returnValue) {
@@ -146,7 +154,7 @@ const createQueryBuilder = (tableName) => {
     select: (...fields) => {
       console.log('Selecting fields:', fields);
       state.selectedFields = fields.length ? fields.join(',') : '*';
-      console.log('Updated state:', state);
+      console.log('Updated state after select:', state);
       return chain;
     },
     insert: (data) => {
@@ -163,31 +171,32 @@ const createQueryBuilder = (tableName) => {
         console.log('Added new product:', newItem);
         state.returnValue = newItem;
       }
-      console.log('Updated state:', state);
+      console.log('Updated state after insert:', state);
       return chain;
     },
     update: (data) => {
       console.log('Setting update data:', data);
       state.updateData = data;
-      console.log('Updated state:', state);
+      console.log('Updated state after update:', state);
       return chain;
     },
     eq: (field, value) => {
       console.log('Adding condition:', { field, value });
       state.conditions.push({ field, value: String(value) });
-      console.log('Updated state:', state);
+      console.log('Updated state after eq:', state);
       return chain;
     },
     single: () => {
       console.log('Setting single mode');
       state.isSingle = true;
-      console.log('Updated state:', state);
+      console.log('Updated state after single:', state);
       return chain;
     },
     then: (callback) => {
       console.log('Executing query with state:', state);
       const result = executeQuery();
       console.log('Query execution result:', result);
+      
       // Create a new state object for the next query
       const newState = {
         conditions: [],
@@ -197,8 +206,11 @@ const createQueryBuilder = (tableName) => {
         returnValue: null,
         isSingle: false
       };
+      
+      // Reset state for next query
       Object.assign(state, newState);
-      console.log('Reset state:', state);
+      console.log('Reset state for next query:', state);
+      
       return Promise.resolve(result).then(callback);
     }
   };
