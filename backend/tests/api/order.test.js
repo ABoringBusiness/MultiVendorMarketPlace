@@ -1,7 +1,10 @@
+import { jest, describe, it, expect, beforeAll, beforeEach, afterAll } from '@jest/globals';
 import request from 'supertest';
 import { app } from '../../app.js';
 import { supabase } from '../../database/connection.js';
 import { ROLES } from '../../constants/roles.js';
+
+let server;
 
 describe('Order API', () => {
   let sellerToken;
@@ -10,6 +13,7 @@ describe('Order API', () => {
   let testOrder;
 
   beforeAll(async () => {
+    server = app.listen();
     // Create test seller
     const sellerRes = await request(app)
       .post('/auth/register')
@@ -47,6 +51,23 @@ describe('Order API', () => {
   beforeEach(async () => {
     // Clear test data
     await supabase.from('orders').delete().neq('id', '0');
+    await supabase.from('products').delete().neq('id', '0');
+    
+    // Create test product for each test
+    const productRes = await request(app)
+      .post('/products/create')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({
+        title: 'Test Product',
+        description: 'Test Description',
+        price: 99.99,
+        category_id: '123e4567-e89b-12d3-a456-426614174000'
+      });
+    testProduct = productRes.body.product;
+  });
+
+  afterAll(async () => {
+    await server.close();
   });
 
   describe('POST /orders/create', () => {

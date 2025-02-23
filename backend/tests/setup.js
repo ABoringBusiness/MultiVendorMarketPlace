@@ -15,6 +15,18 @@ jest.mock('../automation/AuctionReportsCron.js', () => ({
   checkReportedAuctionsCron: jest.fn()
 }));
 
+// Close server after all tests
+afterAll(async () => {
+  // Clear all mocks
+  jest.clearAllMocks();
+  
+  // Clear test data
+  await supabase.from('orders').delete().neq('id', '0');
+  await supabase.from('products').delete().neq('id', '0');
+  await supabase.from('reviews').delete().neq('id', '0');
+  await supabase.from('users').delete().neq('id', '0');
+});
+
 // Mock Supabase client
 const mockSupabase = {
   auth: {
