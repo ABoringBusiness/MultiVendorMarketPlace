@@ -229,6 +229,7 @@ jest.mock('../database/connection.js', () => {
     default: mockSupabase,
     supabase: mockSupabase
   };
+  console.log('Mocking database connection with:', mock);
   return mock;
 });
 
