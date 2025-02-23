@@ -58,6 +58,46 @@ beforeEach(() => {
     if (table === 'products') {
       return {
         select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockImplementation((field, value) => {
+          conditions.push({ field, value });
+          return {
+            select: () => ({
+              single: () => {
+                let result = [...products];
+                for (const { field, value } of conditions) {
+                  result = result.filter(item => item[field] === value);
+                }
+                if (!conditions.some(c => c.field === 'status')) {
+                  result = result.filter(item => item.status === 'active');
+                }
+                return Promise.resolve({
+                  data: result[0] || null,
+                  error: result.length === 0 ? { message: 'Not found' } : null
+                });
+              }
+            })
+          };
+        }),
+        then: (callback) => {
+          let result = [...products];
+          for (const { field, value } of conditions) {
+            result = result.filter(item => item[field] === value);
+          }
+          if (!conditions.some(c => c.field === 'status')) {
+            result = result.filter(item => item.status === 'active');
+          }
+          return callback({ data: result || [], error: null });
+        }
+      };
+    }
+    return mockSupabase.from(table);
+  });
+  
+  // Reset mock implementations
+  mockSupabase.from.mockImplementation((table) => {
+    if (table === 'products') {
+      return {
+        select: jest.fn().mockReturnThis(),
         insert: jest.fn().mockImplementation((data) => {
           const newProduct = {
             id: 'new-id',
@@ -225,7 +265,8 @@ const mockSupabase = {
             return callback({ data: result || [], error: null });
           },
           orderBy: () => chain,
-          limit: () => chain
+          limit: () => chain,
+          select: () => chain
         };
         return chain;
       }),
