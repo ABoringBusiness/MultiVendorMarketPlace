@@ -54,6 +54,19 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+// Helper function to filter products based on conditions
+const filterProducts = (items, conditions) => {
+  let result = [...items];
+  for (const { field, value } of conditions) {
+    result = result.filter(item => item[field] === value);
+  }
+  // If no status filter is explicitly set, only return active products
+  if (!conditions.some(c => c.field === 'status')) {
+    result = result.filter(item => item.status === 'active');
+  }
+  return result;
+};
+
 // Create a query builder that maintains proper chaining
 const createProductQueryBuilder = () => {
   let conditions = [];
@@ -69,6 +82,7 @@ const createProductQueryBuilder = () => {
       const newProduct = {
         id: 'new-id',
         ...data,
+        status: data.status || 'active',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -88,10 +102,7 @@ const createProductQueryBuilder = () => {
       return chain;
     }),
     single: jest.fn().mockImplementation(() => {
-      let result = [...products];
-      for (const { field, value } of conditions) {
-        result = result.filter(item => item[field] === value);
-      }
+      const result = filterProducts(products, conditions);
       if (updateData && result.length > 0) {
         const index = products.findIndex(p => p.id === result[0].id);
         if (index !== -1) {
@@ -110,15 +121,7 @@ const createProductQueryBuilder = () => {
       });
     }),
     then: jest.fn().mockImplementation((callback) => {
-      let result = [...products];
-      // Apply all conditions
-      for (const { field, value } of conditions) {
-        result = result.filter(item => item[field] === value);
-      }
-      // If no status filter is explicitly set, only return active products
-      if (!conditions.some(c => c.field === 'status')) {
-        result = result.filter(item => item.status === 'active');
-      }
+      const result = filterProducts(products, conditions);
       return callback({ data: result || [], error: null });
     })
   };
