@@ -1,9 +1,11 @@
-/** @type {import('jest').Config} */
-module.exports = {
+export default {
   testEnvironment: 'node',
-  moduleFileExtensions: ['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'json', 'node'],
-  testMatch: ['**/tests/api/*.test.js'],
+  transform: {},
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'
+  },
   setupFilesAfterEnv: ['./tests/setup.js'],
+  testMatch: ['**/tests/api/*.test.js'],
   verbose: true,
   testTimeout: 10000,
   moduleDirectories: ['node_modules', '<rootDir>'],
