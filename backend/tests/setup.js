@@ -81,7 +81,8 @@ const createQueryBuilder = (tableName) => {
     conditions: [],
     updateData: null,
     selectedFields: '*',
-    table: tableName
+    table: tableName,
+    returnValue: null
   };
 
   console.log('Initial state:', state);
@@ -104,15 +105,9 @@ const createQueryBuilder = (tableName) => {
       if (state.table === 'products') {
         products.push(newItem);
         console.log('Added new product:', newItem);
+        state.returnValue = newItem;
       }
-      return {
-        select: () => ({
-          single: () => {
-            console.log('Returning newly inserted item:', newItem);
-            return Promise.resolve({ data: newItem, error: null });
-          }
-        })
-      };
+      return chain;
     },
     update: (data) => {
       state.updateData = data;
@@ -133,6 +128,9 @@ const createQueryBuilder = (tableName) => {
       console.log('Single query result:', result);
       
       return Promise.resolve().then(() => {
+        if (state.returnValue) {
+          return { data: state.returnValue, error: null };
+        }
         if (state.updateData && result.length > 0) {
           const index = products.findIndex(p => p.id === result[0].id);
           if (index !== -1) {
@@ -181,7 +179,7 @@ const mockSupabase = {
       if (!user) {
         return Promise.resolve({ data: null, error: { message: 'Invalid token' } });
       }
-      return Promise.resolve({ data: { user: { id: user.id } }, error: null });
+      return Promise.resolve({ data: { user: { id: user.id, role: user.role } }, error: null });
     })
   },
   from: (table) => {
