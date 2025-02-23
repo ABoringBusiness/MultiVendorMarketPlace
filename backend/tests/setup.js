@@ -67,9 +67,10 @@ const filterProducts = (items, conditions) => {
 
   // Apply all conditions
   for (const condition of conditions) {
+    console.log('Applying condition:', condition);
     result = result.filter(item => {
       const matches = String(item[condition.field]) === String(condition.value);
-      console.log('Checking condition:', { 
+      console.log('Checking item:', { 
         field: condition.field,
         itemValue: item[condition.field],
         conditionValue: condition.value,
@@ -140,8 +141,9 @@ const createQueryBuilder = (tableName) => {
 
   const chain = {
     select: (...fields) => {
+      console.log('Selecting fields:', fields);
       state.selectedFields = fields.length ? fields.join(',') : '*';
-      console.log('Setting fields:', state.selectedFields);
+      console.log('Updated state:', state);
       return chain;
     },
     insert: (data) => {
@@ -158,22 +160,25 @@ const createQueryBuilder = (tableName) => {
         console.log('Added new product:', newItem);
         state.returnValue = newItem;
       }
+      console.log('Updated state:', state);
       return chain;
     },
     update: (data) => {
-      state.updateData = data;
       console.log('Setting update data:', data);
+      state.updateData = data;
+      console.log('Updated state:', state);
       return chain;
     },
     eq: (field, value) => {
       console.log('Adding condition:', { field, value });
       state.conditions.push({ field, value: String(value) });
-      console.log('Current conditions:', state.conditions);
+      console.log('Updated state:', state);
       return chain;
     },
     single: () => {
-      state.isSingle = true;
       console.log('Setting single mode');
+      state.isSingle = true;
+      console.log('Updated state:', state);
       return chain;
     },
     then: (callback) => {
