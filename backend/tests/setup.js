@@ -50,7 +50,7 @@ const mockSupabase = {
 // Mock database connection
 jest.mock('../database/connection.js', () => ({
   supabase: mockSupabase
-}));
+}), { virtual: true });
 
 // Mock UserModel
 jest.mock('../models/supabase/userModel.js', () => ({
@@ -66,7 +66,7 @@ jest.mock('../models/supabase/userModel.js', () => ({
     findById: jest.fn().mockResolvedValue(null),
     update: jest.fn().mockResolvedValue(null)
   }
-}));
+}), { virtual: true });
 
 // Mock Stripe
 const mockStripe = {

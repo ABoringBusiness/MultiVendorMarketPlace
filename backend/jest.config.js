@@ -11,5 +11,9 @@ export default {
   moduleDirectories: ['node_modules', '<rootDir>'],
   testEnvironmentOptions: {
     url: 'http://localhost'
-  }
+  },
+  resolver: undefined,
+  transformIgnorePatterns: [
+    'node_modules/(?!@supabase)'
+  ]
 };
