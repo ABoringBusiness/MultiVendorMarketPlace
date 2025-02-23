@@ -4,14 +4,16 @@ export const searchProducts = async (req, res) => {
   try {
     const { q, category, min_price, max_price } = req.query;
     
+    // Start with base query
     let query = supabase
       .from('products')
       .select('*')
       .eq('status', 'active');
 
-    // Apply search filter
+    // Apply search filter using ILIKE for case-insensitive search
     if (q) {
-      query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+      const searchTerm = `%${q}%`;
+      query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`);
     }
 
     // Apply category filter
@@ -20,13 +22,14 @@ export const searchProducts = async (req, res) => {
     }
 
     // Apply price range filter
-    if (min_price !== undefined) {
+    if (min_price !== undefined && min_price !== '') {
       query = query.gte('price', parseFloat(min_price));
     }
-    if (max_price !== undefined) {
+    if (max_price !== undefined && max_price !== '') {
       query = query.lte('price', parseFloat(max_price));
     }
 
+    // Execute query
     const { data: products, error } = await query;
 
     if (error) {
@@ -38,7 +41,7 @@ export const searchProducts = async (req, res) => {
       });
     }
 
-    // Ensure we always return an array
+    // Always return an array, even if empty
     return res.status(200).json({
       success: true,
       products: products || []
