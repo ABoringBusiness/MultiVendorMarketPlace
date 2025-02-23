@@ -206,24 +206,13 @@ const mockSupabase = {
   },
   from: (table) => {
     console.log('Creating query builder for table:', table);
-    if (table === 'users') {
-      const userChain = {
-        select: () => userChain,
-        eq: (field, value) => ({
-          single: () => {
-            const user = Object.values(mockUsers).find(u => u[field] === value);
-            return Promise.resolve({ data: user || null, error: !user ? { message: 'Not found' } : null });
-          }
-        })
-      };
-      return userChain;
-    }
     return createQueryBuilder(table);
   }
 };
 
 // Mock database connection
 jest.mock('../database/connection.js', () => ({
+  __esModule: true,
   default: mockSupabase,
   supabase: mockSupabase
 }));
