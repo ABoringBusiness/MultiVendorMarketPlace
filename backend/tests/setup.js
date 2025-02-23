@@ -84,6 +84,8 @@ const createQueryBuilder = (tableName) => {
     table: tableName
   };
 
+  console.log('Initial state:', state);
+
   const chain = {
     select: (...fields) => {
       state.selectedFields = fields.length ? fields.join(',') : '*';
@@ -120,6 +122,7 @@ const createQueryBuilder = (tableName) => {
     eq: (field, value) => {
       state.conditions.push({ field, value });
       console.log('Adding condition:', { field, value });
+      console.log('Current conditions:', state.conditions);
       return chain;
     },
     single: () => {
