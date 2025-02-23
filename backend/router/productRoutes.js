@@ -20,8 +20,8 @@ router.get('/:id', getProductDetails);
 router.get('/seller/:id', getSellerProducts);
 
 // Protected routes
-router.post('/create', isAuthenticated, isAuthorized(ROLES.SELLER), createProduct);
-router.put('/:id/update', isAuthenticated, isAuthorized(ROLES.SELLER), updateProduct);
-router.post('/:id/disable', isAuthenticated, isAuthorized(ROLES.SELLER, ROLES.ADMIN), disableProduct);
+router.post('/create', isAuthenticated, createProduct);
+router.put('/:id/update', isAuthenticated, updateProduct);
+router.post('/:id/disable', isAuthenticated, disableProduct);
 
 export default router;

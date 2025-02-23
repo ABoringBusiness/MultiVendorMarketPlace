@@ -12,7 +12,7 @@ const router = Router();
 // Public routes
 router.get('/sellers/:id', getSellerReviews);
 
-// Protected routes
+// Protected routes - only check authentication
 router.post('/sellers/:id/create', isAuthenticated, createReview);
 router.delete('/:id/delete', isAuthenticated, deleteReview);
 

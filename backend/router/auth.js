@@ -11,47 +11,106 @@ const router = Router();
 // Register user
 router.post('/register', catchAsyncErrors(async (req, res, next) => {
   try {
-    // Profile image validation temporarily disabled for testing
-    // if (!req.files || Object.keys(req.files).length === 0) {
-    //   return next(new ErrorHandler("Profile Image Required.", 400));
-    // }
+    const { email, password, role, name } = req.body;
+    console.log('Registration request:', { email, role, name });
 
-    // const { profileImage } = req.files;
-    // const allowedFormats = ["image/png", "image/jpeg", "image/webp"];
-    // if (!allowedFormats.includes(profileImage.mimetype)) {
-    //   return next(new ErrorHandler("File format not supported.", 400));
-    // }
+    // Validate required fields
+    if (!email || !password || !role || !name) {
+      console.error('Missing required fields:', { email: !!email, password: !!password, role: !!role, name: !!name });
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields: email, password, role, name"
+      });
+    }
 
+    // Validate role
+    console.log('Validating role:', role, 'Available roles:', Object.values(ROLES));
+    if (!Object.values(ROLES).includes(role)) {
+      console.error('Invalid role:', role, 'Available roles:', Object.values(ROLES));
+      return res.status(400).json({
+        success: false,
+        message: `Invalid role. Must be one of: ${Object.values(ROLES).join(', ')}`
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await UserModel.findByEmail(email);
+    if (existingUser) {
+      console.error('User already exists:', email);
+      return next(new ErrorHandler("User already exists", 400));
+    }
+
+    console.log('Creating Supabase auth user...');
     // Create Supabase auth user
+    console.log('Creating Supabase auth user with:', { email, role: ROLE_MAPPINGS[role] || role, name });
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: req.body.email,
-      password: req.body.password,
+      email,
+      password,
       options: {
         data: {
-          role: ROLE_MAPPINGS[req.body.role] || req.body.role
+          role: ROLE_MAPPINGS[role] || role,
+          name
         },
-        emailRedirectTo: `${process.env.FRONTEND_URL}/auth/callback`
+        emailRedirectTo: process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/auth/callback` : undefined
       }
     });
-    if (authError) throw authError;
+    console.log('Supabase auth response:', { authData, authError });
 
-    if (!authData?.user) throw new Error("Failed to create user");
+    if (authError) {
+      console.error('Auth Error:', authError);
+      return res.status(400).json({
+        success: false,
+        message: authError.message
+      });
+    }
 
+    if (!authData?.user) {
+      console.error('No user data returned from Supabase');
+      return res.status(400).json({
+        success: false,
+        message: "Failed to create user"
+      });
+    }
+
+    console.log('Creating user in database...');
     // Create user in our database
-    const user = await UserModel.create({
-      id: authData.user.id,
-      ...req.body,
-      legacy_role: req.body.role,
-      role: ROLE_MAPPINGS[req.body.role] || req.body.role
-    });
-    
-    res.status(201).json({
-      success: true,
-      message: "Registration successful. Please check your email to confirm your account.",
-      user,
-      token: authData.session?.access_token,
-      confirmEmail: true
-    });
+    let user;
+    try {
+      user = await UserModel.create({
+        id: authData.user.id,
+        email: email,
+        name: name,
+        role: role,
+        legacy_role: role,
+        status: 'active',
+        password: password,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+      if (!user) {
+        console.error('Failed to create user in database - no user returned');
+        return res.status(400).json({
+          success: false,
+          message: "Failed to create user in database"
+        });
+      }
+      console.log('User created successfully:', user.id);
+
+      res.status(201).json({
+        success: true,
+        message: "Registration successful. Please check your email to confirm your account.",
+        user,
+        token: authData.session?.access_token,
+        confirmEmail: true
+      });
+    } catch (dbError) {
+      console.error('Database Error:', dbError);
+      return res.status(400).json({
+        success: false,
+        message: dbError.message || "Failed to create user in database"
+      });
+    }
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }

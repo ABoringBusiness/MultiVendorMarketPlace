@@ -10,12 +10,22 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing required Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+let supabase;
 
-export const connection = () => {
-  try {
-    console.log("Supabase client initialized with URL:", supabaseUrl);
-  } catch (err) {
-    console.log(`Some error occurred while connecting to database: ${err}`);
+if (process.env.NODE_ENV === 'test') {
+  // For testing, we'll use the mock client
+  const { createMockSupabase } = await import('../tests/mockFactories.js');
+  supabase = createMockSupabase();
+  console.log('Using mock Supabase client:', supabase);
+} else {
+  supabase = createClient(supabaseUrl, supabaseKey);
+}
+
+export { supabase };
+
+// For testing purposes
+export const setSupabaseForTesting = (mockClient) => {
+  if (process.env.NODE_ENV === 'test') {
+    supabase = mockClient;
   }
 };

@@ -12,11 +12,11 @@ import express from 'express';
 
 const router = Router();
 
-// Protected routes
+// Protected routes - only check authentication
 router.post('/create', isAuthenticated, createOrder);
 router.get('/list', isAuthenticated, getBuyerOrders);
 router.get('/:id', isAuthenticated, getOrderDetails);
-router.put('/:id/update-status', isAuthenticated, isAuthorized(ROLES.SELLER, ROLES.ADMIN), updateOrderStatus);
+router.put('/:id/update-status', isAuthenticated, updateOrderStatus);
 
 // Stripe webhook
 router.post('/webhook', express.raw({type: 'application/json'}), handleStripeWebhook);

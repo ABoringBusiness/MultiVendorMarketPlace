@@ -1,40 +1,83 @@
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
+import { ROLES } from "../constants/roles.js";
 import { ProductModel } from "../models/supabase/productModel.js";
 import { OrderModel } from "../models/supabase/orderModel.js";
 import { UserModel } from "../models/supabase/userModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { supabase } from "../database/connection.js";
 
 // Disable a seller
 export const disableSeller = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const seller = await UserModel.findById(id);
 
-  if (!seller) {
-    return next(new ErrorHandler("Seller not found.", 404));
+  // Check authentication first (401)
+  if (!req.user || !req.user.role) {
+    return next(new ErrorHandler("Authentication required.", 401));
   }
 
-  if (seller.role !== 'seller') {
-    return next(new ErrorHandler("User is not a seller.", 400));
+  // Check admin role (403)
+  if (req.user.role.toUpperCase() !== ROLES.ADMIN.toUpperCase()) {
+    return next(new ErrorHandler("Only admins can perform this action.", 403));
   }
 
-  const updatedSeller = await UserModel.update(id, {
-    status: 'disabled',
-    updated_at: new Date()
-  });
+  try {
+    // Check if seller exists and is actually a seller
+    const { data: seller, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-  // Notify seller via email
-  await sendEmail({
-    email: seller.email,
-    subject: "Account Disabled",
-    message: "Your seller account has been disabled by an administrator. Please contact support for more information."
-  });
+    if (findError) {
+      console.error('Error finding seller:', findError);
+      return next(new ErrorHandler("Failed to find seller", 500));
+    }
 
-  res.status(200).json({
-    success: true,
-    message: "Seller disabled successfully.",
-    seller: updatedSeller
-  });
+    if (!seller) {
+      return next(new ErrorHandler("Seller not found.", 404));
+    }
+
+    if (seller.role.toUpperCase() !== ROLES.SELLER.toUpperCase()) {
+      return next(new ErrorHandler("User is not a seller.", 404));
+    }
+
+    // Update seller status
+    const { data: updatedSeller, error } = await supabase
+      .from('users')
+      .update([{
+        id,
+        status: 'disabled',
+        updated_at: new Date().toISOString()
+      }]);
+
+    if (error) {
+      console.error('Error disabling seller:', error);
+      return next(new ErrorHandler("Failed to disable seller", 500));
+    }
+
+    // Send response
+    res.status(200).json({
+      success: true,
+      message: "Seller disabled successfully.",
+      seller: updatedSeller
+    });
+
+    // Notify seller via email in background
+    try {
+      await sendEmail({
+        email: seller.email,
+        subject: "Account Disabled",
+        message: "Your seller account has been disabled by an administrator. Please contact support for more information."
+      });
+    } catch (emailError) {
+      console.error('Failed to send email:', emailError);
+      // Don't fail the request if email fails
+    }
+  } catch (error) {
+    console.error('Error in disabling seller:', error);
+    return next(new ErrorHandler("Failed to disable seller", 500));
+  }
 });
 
 // Disable a product
