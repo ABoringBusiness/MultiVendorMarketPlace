@@ -19,6 +19,9 @@ export const listProducts = async (req, res) => {
 
     // Ensure we have an array even if data is null
     const productList = Array.isArray(products) ? products : [];
+    
+    // Log for debugging
+    console.log('Products fetched:', productList);
 
     return res.status(200).json({
       success: true,
@@ -121,10 +124,17 @@ export const updateProduct = async (req, res) => {
       .from('products')
       .select('*')
       .eq('id', id)
-      .eq('status', 'active')
       .single();
 
     if (fetchError || !product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Check if product is active
+    if (product.status !== 'active') {
       return res.status(404).json({
         success: false,
         message: 'Product not found'
