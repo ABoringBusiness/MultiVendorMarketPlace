@@ -75,14 +75,14 @@ const filterProducts = (items, conditions) => {
 
 // Create a query builder that maintains proper chaining
 const createQueryBuilder = (tableName) => {
+  console.log('Creating query builder for table:', tableName);
+
   const state = {
     conditions: [],
     updateData: null,
     selectedFields: '*',
     table: tableName
   };
-
-  console.log('Creating query builder for table:', tableName);
 
   const chain = {
     from: (tableName) => {
@@ -110,7 +110,10 @@ const createQueryBuilder = (tableName) => {
       }
       return {
         select: () => ({
-          single: () => Promise.resolve({ data: newItem, error: null })
+          single: () => {
+            console.log('Returning newly inserted item:', newItem);
+            return Promise.resolve({ data: newItem, error: null });
+          }
         })
       };
     },
@@ -196,7 +199,9 @@ const mockSupabase = {
         }))
       };
     }
-    return createQueryBuilder(table);
+    const builder = createQueryBuilder(table);
+    console.log('Created query builder:', builder);
+    return builder;
   })
 };
 
