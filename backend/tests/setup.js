@@ -48,6 +48,8 @@ let products = [];
 beforeEach(() => {
   products = [...initialProducts];
   jest.clearAllMocks();
+  conditions = []; // Reset conditions
+  updateData = null; // Reset update data
 });
 
 // Mock Supabase client
@@ -82,6 +84,10 @@ const mockSupabase = {
       };
     }
 
+    // Shared state for query conditions and updates
+    let conditions = [];
+    let updateData = null;
+
     if (table !== 'products') {
       return {
         select: jest.fn().mockReturnThis(),
@@ -92,9 +98,6 @@ const mockSupabase = {
         then: jest.fn().mockResolvedValue({ data: [], error: null })
       };
     }
-
-    let conditions = [];
-    let updateData = null;
 
     const queryBuilder = {
       select: jest.fn().mockReturnThis(),
