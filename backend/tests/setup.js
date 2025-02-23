@@ -65,47 +65,45 @@ const mockSupabase = {
     const queryBuilder = {
       select: jest.fn().mockReturnThis(),
       insert: jest.fn().mockImplementation((data) => {
-        if (table === 'products') {
-          const newProduct = {
-            id: 'new-id',
-            ...data,
-            status: 'active'
-          };
-          return {
-            select: () => ({
-              single: () => Promise.resolve({ data: newProduct, error: null })
-            })
-          };
-        }
-        return queryBuilder;
+        const newProduct = {
+          id: 'new-id',
+          ...data,
+          status: 'active',
+          seller_id: 'seller-id'
+        };
+        return {
+          select: () => ({
+            single: () => Promise.resolve({ data: newProduct, error: null })
+          })
+        };
       }),
       update: jest.fn().mockImplementation((data) => {
-        if (table === 'products') {
-          const updatedProduct = {
-            ...testProducts[0],
-            ...data
-          };
-          return {
-            eq: () => ({
-              select: () => ({
-                single: () => Promise.resolve({ data: updatedProduct, error: null })
-              })
+        const updatedProduct = {
+          ...testProducts[0],
+          ...data
+        };
+        return {
+          eq: () => ({
+            select: () => ({
+              single: () => Promise.resolve({ data: updatedProduct, error: null })
             })
-          };
-        }
-        return queryBuilder;
+          })
+        };
       }),
       eq: jest.fn().mockImplementation((field, value) => {
-        if (table === 'products' && field === 'id') {
-          const product = testProducts.find(p => p.id === value);
-          queryBuilder.single = () => Promise.resolve({ data: product, error: null });
+        if (table === 'products') {
+          const product = testProducts.find(p => p[field] === value);
+          if (product) {
+            queryBuilder.single = () => Promise.resolve({ data: product, error: null });
+            return queryBuilder;
+          }
+          queryBuilder.single = () => Promise.resolve({ data: null, error: null });
+          return queryBuilder;
         }
         return queryBuilder;
       }),
+      neq: jest.fn().mockReturnThis(),
       single: jest.fn().mockImplementation(() => {
-        if (table === 'products') {
-          return Promise.resolve({ data: testProducts[0], error: null });
-        }
         return Promise.resolve({ data: null, error: null });
       }),
       then: jest.fn().mockImplementation((callback) => {
