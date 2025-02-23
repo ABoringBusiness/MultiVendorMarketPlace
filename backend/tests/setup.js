@@ -27,6 +27,20 @@ const initialProducts = [
   }
 ];
 
+// Mock users for testing
+const mockUsers = {
+  'mock-seller-token': {
+    id: 'seller-id',
+    role: ROLES.SELLER,
+    email: 'seller@test.com'
+  },
+  'mock-admin-token': {
+    id: 'admin-id',
+    role: ROLES.ADMIN,
+    email: 'admin@test.com'
+  }
+};
+
 // Mock database state
 let products = [];
 
@@ -46,12 +60,27 @@ const mockSupabase = {
       data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
       error: null
     }),
-    getUser: jest.fn().mockResolvedValue({
-      data: { user: { id: 'test-user-id' } },
-      error: null
+    getUser: jest.fn().mockImplementation((token) => {
+      const user = mockUsers[token];
+      if (!user) {
+        return Promise.resolve({ data: null, error: { message: 'Invalid token' } });
+      }
+      return Promise.resolve({ data: { user: { id: user.id } }, error: null });
     })
   },
   from: jest.fn().mockImplementation((table) => {
+    if (table === 'users') {
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockImplementation((field, value) => ({
+          single: () => {
+            const user = Object.values(mockUsers).find(u => u[field] === value);
+            return Promise.resolve({ data: user || null, error: !user ? { message: 'Not found' } : null });
+          }
+        }))
+      };
+    }
+
     if (table !== 'products') {
       return {
         select: jest.fn().mockReturnThis(),
