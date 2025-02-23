@@ -1,4 +1,5 @@
 const { Product, Category, User } = require("../models");
+const { Op } = require("sequelize");
 
 // @desc Create a new product
 // @route POST /api/products
@@ -35,7 +36,7 @@ exports.createProduct = async (req, res) => {
 // @route GET /api/products
 exports.getAllProducts = async (req, res) => {
   try {
-    const { categoryId, sellerId } = req.query;
+    const { categoryId, sellerId, minPrice, maxPrice, search } = req.query;
 
     const whereCondition = { isDisabled: false };
     if (categoryId) {
@@ -44,6 +45,21 @@ exports.getAllProducts = async (req, res) => {
 
     if (sellerId) {
       whereCondition.sellerId = sellerId;
+    }
+
+    if(minPrice) {
+      whereCondition.price = {[Op.gte]: parseFloat(minPrice)}
+    }
+
+    if(maxPrice) {
+      whereCondition.price = {...whereCondition.price, [Op.lte]: parseFloat(maxPrice)}
+    }
+
+    if (search) {
+      whereCondition[Op.or] = [
+        { title: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } }
+      ];
     }
 
     const products = await Product.findAll({

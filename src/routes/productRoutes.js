@@ -50,22 +50,32 @@ router.post("/", authMiddleware, createProduct);
  * @swagger
  * /products:
  *   get:
- *     summary: Get all products (filter by category or seller optional)
+ *     summary: Get all products with filters
  *     tags: [Product]
  *     parameters:
  *       - in: query
  *         name: categoryId
  *         schema:
  *           type: string
- *         description: Filter products by category
+ *         description: Filter by category
  *       - in: query
- *         name: sellerId
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: Filter by minimum price
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: Filter by maximum price
+ *       - in: query
+ *         name: search
  *         schema:
  *           type: string
- *         description: Filter products by seller
+ *         description: Search products by title or description
  *     responses:
  *       200:
- *         description: List of products
+ *         description: List of filtered products
  */
 router.get("/", getAllProducts);
 
