@@ -178,7 +178,9 @@ const createQueryBuilder = (tableName) => {
     },
     then: (callback) => {
       console.log('Executing query');
-      return Promise.resolve(executeQuery()).then(callback);
+      const result = executeQuery();
+      console.log('Query execution result:', result);
+      return Promise.resolve(result).then(callback);
     }
   };
 
