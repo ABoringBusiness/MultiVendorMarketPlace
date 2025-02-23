@@ -78,9 +78,10 @@ const filterProducts = (items, conditions) => {
       });
       return matches;
     });
+    console.log(`After applying condition ${condition.field}=${condition.value}:`, result);
   }
 
-  console.log('Filter result:', result);
+  console.log('Final filter result:', result);
   return result;
 };
 
@@ -93,10 +94,49 @@ const createQueryBuilder = (tableName) => {
     updateData: null,
     selectedFields: '*',
     table: tableName,
-    returnValue: null
+    returnValue: null,
+    isSingle: false
   };
 
   console.log('Initial state:', state);
+
+  const executeQuery = () => {
+    console.log('Executing query with state:', state);
+    const items = state.table === 'products' ? products : [];
+    console.log('Items before filtering:', items);
+    const result = filterProducts(items, state.conditions);
+    console.log('Query result:', result);
+
+    if (state.returnValue) {
+      console.log('Returning inserted/updated item:', state.returnValue);
+      return { data: state.returnValue, error: null };
+    }
+
+    if (state.updateData && result.length > 0) {
+      const index = products.findIndex(p => p.id === result[0].id);
+      if (index !== -1) {
+        const updatedItem = {
+          ...products[index],
+          ...state.updateData,
+          updated_at: new Date().toISOString()
+        };
+        products[index] = updatedItem;
+        console.log('Updated product:', updatedItem);
+        return { data: updatedItem, error: null };
+      }
+    }
+
+    if (state.isSingle) {
+      console.log('Returning single result:', result[0] || null);
+      return { 
+        data: result[0] || null,
+        error: result.length === 0 ? { message: 'Not found' } : null
+      };
+    }
+
+    console.log('Returning all results:', result);
+    return { data: result, error: null };
+  };
 
   const chain = {
     select: (...fields) => {
@@ -132,44 +172,18 @@ const createQueryBuilder = (tableName) => {
       return chain;
     },
     single: () => {
-      console.log('Executing single query with state:', state);
-      const items = state.table === 'products' ? products : [];
-      console.log('Items before filtering:', items);
-      const result = filterProducts(items, state.conditions);
-      console.log('Single query result:', result);
-      
-      return Promise.resolve().then(() => {
-        if (state.returnValue) {
-          console.log('Returning inserted/updated item:', state.returnValue);
-          return { data: state.returnValue, error: null };
+      state.isSingle = true;
+      console.log('Setting single mode');
+      return {
+        then: (callback) => {
+          console.log('Executing single query');
+          return Promise.resolve(executeQuery()).then(callback);
         }
-        if (state.updateData && result.length > 0) {
-          const index = products.findIndex(p => p.id === result[0].id);
-          if (index !== -1) {
-            const updatedItem = {
-              ...products[index],
-              ...state.updateData,
-              updated_at: new Date().toISOString()
-            };
-            products[index] = updatedItem;
-            console.log('Updated product:', updatedItem);
-            return { data: updatedItem, error: null };
-          }
-        }
-        console.log('Returning single result:', result[0] || null);
-        return { 
-          data: result[0] || null,
-          error: result.length === 0 ? { message: 'Not found' } : null
-        };
-      });
+      };
     },
     then: (callback) => {
-      console.log('Executing query with state:', state);
-      const items = state.table === 'products' ? products : [];
-      console.log('Items before filtering:', items);
-      const result = filterProducts(items, state.conditions);
-      console.log('Query result:', result);
-      return Promise.resolve({ data: result, error: null }).then(callback);
+      console.log('Executing query');
+      return Promise.resolve(executeQuery()).then(callback);
     }
   };
 
