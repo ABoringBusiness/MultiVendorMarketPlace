@@ -1,82 +1,73 @@
 import { supabase } from '../database/connection.js';
-import { ROLES, ROLE_MAPPINGS } from '../constants/roles.js';
-import ErrorHandler from "./error.js";
-import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 
-export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
+export const isAuthenticated = async (req, res, next) => {
   try {
-    // Get token from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return next(new ErrorHandler("No token provided.", 401));
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
     }
 
-    const token = authHeader.split(' ')[1];
-
-    // For testing environment
+    // For test environment, use mock tokens
     if (process.env.NODE_ENV === 'test') {
-      // Handle test tokens
-      if (token.startsWith('test_token_auth_')) {
-        const parts = token.split('_');
-        const role = parts[3];
-        const userId = parts[4];
-        req.user = {
-          id: userId,
-          email: `${role}@test.com`,
-          role: role.toUpperCase(),
-          user_metadata: { role: role.toUpperCase() },
-          status: 'active'
-        };
-        return next();
+      const mockUsers = {
+        'mock-seller-token': {
+          id: 'seller-id',
+          role: 'seller',
+          email: 'seller@test.com'
+        },
+        'mock-admin-token': {
+          id: 'admin-id',
+          role: 'admin',
+          email: 'admin@test.com'
+        }
+      };
+
+      const mockUser = mockUsers[token];
+      if (!mockUser) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid or expired token'
+        });
       }
 
-      // Get user from mock Supabase
-      const { data, error } = await supabase.auth.getUser(token);
-      if (!error && data?.user) {
-        const user = data.user;
-        const role = (user.role || user.user_metadata?.role || '').toUpperCase();
-        req.user = {
-          id: user.id,
-          email: user.email,
-          role: role,
-          user_metadata: { role },
-          status: 'active'
-        };
-        return next();
-      }
-
-      return next(new ErrorHandler("Invalid token.", 401));
-    }
-    
-    // Verify token with Supabase
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authUser) {
-      return next(new ErrorHandler("Invalid or expired token.", 401));
+      req.user = mockUser;
+      return next();
     }
 
-    // Get user data from our users table
-    const { data: dbUser, error: userError } = await supabase
+    // For production, use Supabase auth
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired token'
+      });
+    }
+
+    // Get user details from our users table
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
-      .eq('id', authUser.id)
+      .eq('id', user.id)
       .single();
 
-    if (userError || !dbUser) {
-      return next(new ErrorHandler("User not found.", 404));
+    if (userError || !userData) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
     }
 
-    req.user = dbUser;
+    req.user = userData;
     next();
   } catch (error) {
-    return next(new ErrorHandler(error.message, 401));
+    console.error('Auth middleware error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
   }
-});
-
-export const isAuthorized = (...roles) => {
-  return (req, res, next) => {
-    if (!req.user || !req.user.role) {
-      return next(new ErrorHandler("Authentication required.", 401));
-    }
-    next();
-  };
 };

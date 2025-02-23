@@ -30,9 +30,92 @@ afterAll(async () => {
   } catch (error) {
     console.error('Error cleaning up test data:', error);
   }
-  
-  // No need to explicitly close Supabase connection in tests
 });
+
+// Test data
+const testProducts = [
+  {
+    id: '1',
+    title: 'Digital Art 1',
+    description: 'Beautiful digital art',
+    price: 99.99,
+    category_id: '123e4567-e89b-12d3-a456-426614174000',
+    seller_id: 'seller-id',
+    status: 'active'
+  },
+  {
+    id: '2',
+    title: 'Photography Print',
+    description: 'High quality photo print',
+    price: 149.99,
+    category_id: '223e4567-e89b-12d3-a456-426614174000',
+    seller_id: 'seller-id',
+    status: 'active'
+  }
+];
+
+const testUsers = {
+  'mock-seller-token': {
+    id: 'seller-id',
+    role: 'seller',
+    email: 'seller@test.com'
+  },
+  'mock-admin-token': {
+    id: 'admin-id',
+    role: 'admin',
+    email: 'admin@test.com'
+  }
+};
+
+// Create chainable query builder
+const createQueryBuilder = (table, data) => {
+  let queryData = data;
+  let conditions = [];
+
+  const builder = {
+    select: () => builder,
+    insert: (newData) => {
+      queryData = { ...newData, id: 'new-id' };
+      return builder;
+    },
+    update: (updates) => {
+      queryData = { ...queryData, ...updates };
+      return builder;
+    },
+    eq: (field, value) => {
+      conditions.push({ field, value, op: 'eq' });
+      return builder;
+    },
+    neq: (field, value) => {
+      conditions.push({ field, value, op: 'neq' });
+      return builder;
+    },
+    single: () => {
+      if (Array.isArray(queryData)) {
+        const filtered = queryData.filter(item => 
+          conditions.every(({ field, value, op }) => 
+            op === 'eq' ? item[field] === value : item[field] !== value
+          )
+        );
+        return Promise.resolve({ data: filtered[0] || null, error: null });
+      }
+      return Promise.resolve({ data: queryData, error: null });
+    },
+    then: (cb) => {
+      if (Array.isArray(queryData)) {
+        const filtered = queryData.filter(item => 
+          conditions.every(({ field, value, op }) => 
+            op === 'eq' ? item[field] === value : item[field] !== value
+          )
+        );
+        return cb({ data: filtered, error: null });
+      }
+      return cb({ data: queryData, error: null });
+    }
+  };
+
+  return builder;
+};
 
 // Mock Supabase client
 const mockSupabase = {
@@ -59,147 +142,12 @@ const mockSupabase = {
     }),
     signOut: jest.fn().mockResolvedValue({ error: null })
   },
-  from: jest.fn().mockReturnValue({
-    insert: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    neq: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
-    ilike: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    lte: jest.fn().mockReturnThis(),
-    single: jest.fn().mockResolvedValue({
-      data: {
-        id: 'test-user-id',
-        email: 'test@test.com',
-        role: 'buyer',
-        name: 'Test User',
-        created_at: new Date().toISOString()
-      },
-      error: null
-    }),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    lte: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
-    then: jest.fn().mockImplementation((callback) => {
-      // Default test data
-      const allProducts = [
-        {
-          id: '1',
-          title: 'Digital Art 1',
-          description: 'Beautiful digital art',
-          price: 99.99,
-          category_id: '123e4567-e89b-12d3-a456-426614174000',
-          status: 'active'
-        },
-        {
-          id: '2',
-          title: 'Photography Print',
-          description: 'High quality photo print',
-          price: 149.99,
-          category_id: '223e4567-e89b-12d3-a456-426614174000',
-          status: 'active'
-        },
-        {
-          id: '3',
-          title: 'Abstract Art',
-          description: 'Modern abstract art',
-          price: 299.99,
-          category_id: '123e4567-e89b-12d3-a456-426614174000',
-          status: 'active'
-        }
-      ];
-
-      // Mock function to track calls
-      const mockFn = jest.fn();
-      
-      // Return test data based on mock function calls
-      mockFn.mockImplementation((table) => {
-        if (table === 'products') {
-          return {
-            select: () => ({
-              eq: () => ({
-                single: () => Promise.resolve({ data: allProducts[0], error: null }),
-                then: (cb) => cb({ data: allProducts, error: null })
-              })
-            }),
-            insert: () => ({
-              select: () => ({
-                single: () => Promise.resolve({ 
-                  data: { 
-                    id: 'new-product-id',
-                    title: 'New Product',
-                    description: 'New description',
-                    price: 149.99,
-                    category_id: '123e4567-e89b-12d3-a456-426614174000',
-                    status: 'active'
-                  }, 
-                  error: null 
-                })
-              })
-            }),
-            update: () => ({
-              eq: () => ({
-                select: () => ({
-                  single: () => Promise.resolve({ 
-                    data: { 
-                      id: '1',
-                      title: 'Updated Product',
-                      description: 'Updated description',
-                      price: 199.99,
-                      status: 'active'
-                    }, 
-                    error: null 
-                  })
-                })
-              })
-            })
-          };
-        }
-        
-        return {
-          select: () => ({
-            eq: () => ({
-              single: () => Promise.resolve({ data: null, error: null }),
-              then: (cb) => cb({ data: [], error: null })
-            })
-          })
-        };
-      });
-
-      return mockFn(arguments[0]);
-
-      // Apply filters based on the query conditions
-      for (const call of mockCalls) {
-        const [method, ...args] = call;
-        
-        if (method === 'eq' && args[0] === 'category_id') {
-          filteredProducts = filteredProducts.filter(p => p.category_id === args[1]);
-        }
-        else if (method === 'gte' && args[0] === 'price') {
-          filteredProducts = filteredProducts.filter(p => p.price >= parseFloat(args[1]));
-        }
-        else if (method === 'lte' && args[0] === 'price') {
-          filteredProducts = filteredProducts.filter(p => p.price <= parseFloat(args[1]));
-        }
-        else if (method === 'or' && args[0].includes('title.ilike')) {
-          const searchTerm = args[0].split('.')[2].replace(/%/g, '').toLowerCase();
-          filteredProducts = filteredProducts.filter(p => 
-            p.title.toLowerCase().includes(searchTerm) || 
-            p.description.toLowerCase().includes(searchTerm)
-          );
-        }
-      }
-
-      return Promise.resolve(callback({
-        data: filteredProducts,
-        error: null
-      }));
-    })
+  from: jest.fn().mockImplementation((table) => {
+    const mockData = {
+      products: testProducts,
+      users: testUsers
+    };
+    return createQueryBuilder(table, mockData[table] || []);
   })
 };
 
@@ -207,32 +155,4 @@ const mockSupabase = {
 jest.unstable_mockModule('../database/connection.js', () => ({
   default: mockSupabase,
   supabase: mockSupabase
-}));
-
-// Mock UserModel
-jest.unstable_mockModule('../models/supabase/userModel.js', () => ({
-  default: {
-    findByEmail: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockImplementation(data => Promise.resolve({
-      id: data.id || 'test-user-id',
-      email: data.email,
-      role: data.role,
-      name: data.name,
-      created_at: new Date().toISOString()
-    })),
-    findById: jest.fn().mockResolvedValue(null),
-    update: jest.fn().mockResolvedValue(null)
-  },
-  UserModel: {
-    findByEmail: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockImplementation(data => Promise.resolve({
-      id: data.id || 'test-user-id',
-      email: data.email,
-      role: data.role,
-      name: data.name,
-      created_at: new Date().toISOString()
-    })),
-    findById: jest.fn().mockResolvedValue(null),
-    update: jest.fn().mockResolvedValue(null)
-  }
 }));
