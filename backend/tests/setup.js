@@ -80,12 +80,6 @@ const mockSupabase = {
       },
       error: null
     }),
-    mockReturnThis: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    lte: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
     then: jest.fn().mockImplementation((callback) => {
       // Default test data
       const allProducts = [
@@ -115,8 +109,10 @@ const mockSupabase = {
         }
       ];
 
-      // Return filtered products based on the query
-      let filteredProducts = [...allProducts];
+      return Promise.resolve(callback({
+        data: allProducts,
+        error: null
+      }));
 
       // Apply filters based on the query conditions
       for (const call of mockCalls) {

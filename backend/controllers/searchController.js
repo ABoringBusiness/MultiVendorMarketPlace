@@ -30,11 +30,15 @@ export const searchProducts = async (req, res) => {
     // Apply price range filter
     if (min_price !== undefined && min_price !== '') {
       const minPriceNum = parseFloat(min_price);
-      filteredProducts = filteredProducts.filter(p => p.price >= minPriceNum);
+      if (!isNaN(minPriceNum)) {
+        filteredProducts = filteredProducts.filter(p => p.price >= minPriceNum);
+      }
     }
     if (max_price !== undefined && max_price !== '') {
       const maxPriceNum = parseFloat(max_price);
-      filteredProducts = filteredProducts.filter(p => p.price <= maxPriceNum);
+      if (!isNaN(maxPriceNum)) {
+        filteredProducts = filteredProducts.filter(p => p.price <= maxPriceNum);
+      }
     }
 
     // Apply text search filter
