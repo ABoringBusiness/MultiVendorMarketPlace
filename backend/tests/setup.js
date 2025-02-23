@@ -52,6 +52,7 @@ let products = [];
 beforeEach(() => {
   products = [...initialProducts];
   jest.clearAllMocks();
+  console.log('Test data initialized:', products);
 });
 
 // Helper function to filter products based on conditions
@@ -70,10 +71,20 @@ const filterProducts = (items, conditions) => {
 
 // Create a query builder that maintains proper chaining
 const createProductQueryBuilder = () => {
+  // Create a fresh chain object for each query
   const chain = {
     conditions: [],
     updateData: null,
     selectedFields: '*',
+    // Debug helper
+    debug: () => {
+      console.log('Chain state:', {
+        conditions: chain.conditions,
+        updateData: chain.updateData,
+        selectedFields: chain.selectedFields,
+        products: products
+      });
+    },
 
     select: jest.fn().mockImplementation((...fields) => {
       chain.selectedFields = fields.length ? fields.join(',') : '*';
@@ -127,10 +138,15 @@ const createProductQueryBuilder = () => {
     }),
 
     then: jest.fn().mockImplementation((callback) => {
+      chain.debug(); // Log chain state
       const result = filterProducts(products, chain.conditions);
-      console.log('Query conditions:', chain.conditions);
       console.log('Filtered products:', result);
-      return callback({ data: result || [], error: null });
+      // Create a new chain for the next query
+      const response = callback({ data: result || [], error: null });
+      chain.conditions = [];
+      chain.updateData = null;
+      chain.selectedFields = '*';
+      return response;
     })
   };
   return chain;
