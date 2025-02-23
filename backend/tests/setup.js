@@ -69,11 +69,13 @@ const filterProducts = (items, conditions) => {
   for (const condition of conditions) {
     console.log('Applying condition:', condition);
     result = result.filter(item => {
-      const matches = String(item[condition.field]) === String(condition.value);
+      const itemValue = String(item[condition.field]);
+      const conditionValue = String(condition.value);
+      const matches = itemValue === conditionValue;
       console.log('Checking item:', { 
         field: condition.field,
-        itemValue: item[condition.field],
-        conditionValue: condition.value,
+        itemValue,
+        conditionValue,
         matches,
         item
       });
@@ -125,6 +127,7 @@ const createQueryBuilder = (tableName) => {
         console.log('Updated product:', updatedItem);
         return { data: updatedItem, error: null };
       }
+      return { data: null, error: { message: 'Product not found' } };
     }
 
     if (state.isSingle) {
