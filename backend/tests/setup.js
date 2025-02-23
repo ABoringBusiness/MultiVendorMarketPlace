@@ -1,9 +1,20 @@
 import { jest } from '@jest/globals';
-import { jest } from '@jest/globals';
 import { config } from 'dotenv';
 
 // Load environment variables
 config();
+
+// Mock UserModel
+const mockUserModel = {
+  findByEmail: jest.fn(),
+  create: jest.fn(),
+  findById: jest.fn(),
+  update: jest.fn()
+};
+
+jest.mock('../models/supabase/userModel.js', () => ({
+  UserModel: mockUserModel
+}));
 
 // Mock UserModel
 jest.mock('../models/supabase/userModel.js', () => ({

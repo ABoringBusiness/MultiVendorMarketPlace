@@ -17,7 +17,7 @@ app.use(errorMiddleware);
 describe('Authentication API', () => {
   beforeEach(async () => {
     // Reset mock implementations
-    jest.resetAllMocks();
+    const { UserModel } = await import('../../models/supabase/userModel.js');
     
     // Setup default mock responses
     UserModel.findByEmail.mockResolvedValue(null);
