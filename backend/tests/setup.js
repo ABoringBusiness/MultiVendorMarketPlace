@@ -166,8 +166,8 @@ const createQueryBuilder = (tableName) => {
       return chain;
     },
     eq: (field, value) => {
-      state.conditions.push({ field, value });
       console.log('Adding condition:', { field, value });
+      state.conditions.push({ field, value });
       console.log('Current conditions:', state.conditions);
       return chain;
     },
@@ -177,7 +177,7 @@ const createQueryBuilder = (tableName) => {
       return chain;
     },
     then: (callback) => {
-      console.log('Executing query');
+      console.log('Executing query with state:', state);
       const result = executeQuery();
       console.log('Query execution result:', result);
       return Promise.resolve(result).then(callback);
