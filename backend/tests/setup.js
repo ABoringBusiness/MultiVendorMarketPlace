@@ -74,13 +74,15 @@ const filterProducts = (items, conditions) => {
 };
 
 // Create a query builder that maintains proper chaining
-const createQueryBuilder = () => {
+const createQueryBuilder = (tableName) => {
   const state = {
     conditions: [],
     updateData: null,
     selectedFields: '*',
-    table: null
+    table: tableName
   };
+
+  console.log('Creating query builder for table:', tableName);
 
   const chain = {
     from: (tableName) => {
@@ -194,7 +196,7 @@ const mockSupabase = {
         }))
       };
     }
-    return createQueryBuilder().from(table);
+    return createQueryBuilder(table);
   })
 };
 
