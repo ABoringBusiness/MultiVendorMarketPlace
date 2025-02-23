@@ -233,11 +233,12 @@ const mockSupabase = {
           updated_at: new Date().toISOString()
         };
         products.push(newProduct);
-        return {
+        const chain = {
           select: () => ({
             single: () => Promise.resolve({ data: newProduct, error: null })
           })
         };
+        return chain;
       }),
       select: jest.fn().mockImplementation((...fields) => {
         const chain = {
@@ -270,7 +271,10 @@ const mockSupabase = {
           },
           orderBy: () => chain,
           limit: () => chain,
-          select: () => chain
+          select: () => chain,
+          match: () => chain,
+          ilike: () => chain,
+          in: () => chain
         };
         return chain;
       }),
@@ -285,9 +289,6 @@ const mockSupabase = {
                   let result = [...products];
                   for (const { field, value } of conditions) {
                     result = result.filter(item => item[field] === value);
-                  }
-                  if (!conditions.some(c => c.field === 'status')) {
-                    result = result.filter(item => item.status === 'active');
                   }
                   if (result.length > 0) {
                     const index = products.findIndex(p => p.id === result[0].id);
