@@ -5,11 +5,13 @@ import cookieParser from 'cookie-parser';
 import { ROLES } from '../../constants/roles.js';
 import authRouter from '../../router/auth.js';
 import { errorMiddleware } from '../../middlewares/error.js';
+import { UserModel } from '../../models/supabase/userModel.js';
 
+// Create Express app for testing
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-app.use('/api/v1/auth', authRouter);
+app.use('/auth', authRouter); // Remove /api/v1 prefix for tests
 app.use(errorMiddleware);
 
 describe('Authentication API', () => {
@@ -28,6 +30,8 @@ describe('Authentication API', () => {
           name: 'Test Buyer',
           role: ROLES.BUYER
         });
+      
+      console.log('Register response:', res.body);
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
