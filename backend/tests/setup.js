@@ -60,11 +60,20 @@ const filterProducts = (items, conditions) => {
   console.log('Filtering products:', { items, conditions });
   let result = [...items];
   
+  if (!conditions || conditions.length === 0) {
+    return result;
+  }
+
   // Apply all conditions
   for (const condition of conditions) {
     result = result.filter(item => {
       const matches = item[condition.field] === condition.value;
-      console.log('Checking condition:', { item, condition, matches });
+      console.log('Checking condition:', { 
+        field: condition.field,
+        itemValue: item[condition.field],
+        conditionValue: condition.value,
+        matches
+      });
       return matches;
     });
   }
