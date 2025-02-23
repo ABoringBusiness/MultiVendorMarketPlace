@@ -28,6 +28,10 @@ const User = sequelize.define("User", {
     type: DataTypes.ENUM("buyer", "seller", "admin"),
     defaultValue: "buyer",
   },
+  isDisabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 }, {
   timestamps: true,
   hooks: {
