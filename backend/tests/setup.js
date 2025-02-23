@@ -58,69 +58,62 @@ beforeEach(() => {
 // Helper function to filter products based on conditions
 const filterProducts = (items, conditions) => {
   let result = [...items];
-  // Apply all conditions
-  for (const { field, value } of conditions) {
-    result = result.filter(item => item[field] === value);
+  for (const condition of conditions) {
+    result = result.filter(item => item[condition.field] === condition.value);
   }
   return result;
 };
 
 // Create a query builder that maintains proper chaining
-const createProductQueryBuilder = () => {
-  // Create a fresh chain object for each query
-  const chain = {
+const createQueryBuilder = () => {
+  const state = {
     conditions: [],
     updateData: null,
     selectedFields: '*',
-    // Debug helper
-    debug: () => {
-      console.log('Chain state:', {
-        conditions: chain.conditions,
-        updateData: chain.updateData,
-        selectedFields: chain.selectedFields,
-        products: products
-      });
-    },
+    table: null
+  };
 
-    select: jest.fn().mockImplementation((...fields) => {
-      chain.selectedFields = fields.length ? fields.join(',') : '*';
+  const chain = {
+    from: (tableName) => {
+      state.table = tableName;
       return chain;
-    }),
-
-    insert: jest.fn().mockImplementation((data) => {
-      const newProduct = {
+    },
+    select: (...fields) => {
+      state.selectedFields = fields.length ? fields.join(',') : '*';
+      return chain;
+    },
+    insert: (data) => {
+      const newItem = {
         id: 'new-id',
         ...data,
-        status: data.status || 'active',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      products.push(newProduct);
+      if (state.table === 'products') {
+        products.push(newItem);
+      }
       return {
         select: () => ({
-          single: () => Promise.resolve({ data: newProduct, error: null })
+          single: () => Promise.resolve({ data: newItem, error: null })
         })
       };
-    }),
-
-    update: jest.fn().mockImplementation((data) => {
-      chain.updateData = data;
+    },
+    update: (data) => {
+      state.updateData = data;
       return chain;
-    }),
-
-    eq: jest.fn().mockImplementation((field, value) => {
-      chain.conditions.push({ field, value });
+    },
+    eq: (field, value) => {
+      state.conditions.push({ field, value });
       return chain;
-    }),
-
-    single: jest.fn().mockImplementation(() => {
-      const result = filterProducts(products, chain.conditions);
-      if (chain.updateData && result.length > 0) {
+    },
+    single: () => {
+      const result = filterProducts(state.table === 'products' ? products : [], state.conditions);
+      if (state.updateData && result.length > 0) {
         const index = products.findIndex(p => p.id === result[0].id);
         if (index !== -1) {
           const updatedItem = {
             ...products[index],
-            ...chain.updateData,
+            ...state.updateData,
             updated_at: new Date().toISOString()
           };
           products[index] = updatedItem;
@@ -131,19 +124,15 @@ const createProductQueryBuilder = () => {
         data: result[0] || null,
         error: result.length === 0 ? { message: 'Not found' } : null
       });
-    }),
-
-    then: jest.fn().mockImplementation((callback) => {
-      chain.debug(); // Log chain state
-      const result = filterProducts(products, chain.conditions);
-      console.log('Query conditions:', chain.conditions);
-      console.log('Filtered products:', result);
-      // Create a new chain for the next query
-      const response = callback({ data: result || [], error: null });
-      // Don't reset chain state here since it's needed for chaining
-      return response;
-    })
+    },
+    then: (callback) => {
+      console.log('Query state:', state);
+      const result = filterProducts(state.table === 'products' ? products : [], state.conditions);
+      console.log('Filtered results:', result);
+      return callback({ data: result || [], error: null });
+    }
   };
+
   return chain;
 };
 
@@ -179,18 +168,8 @@ const mockSupabase = {
       };
     }
 
-    if (table !== 'products') {
-      return {
-        select: jest.fn().mockReturnThis(),
-        insert: jest.fn().mockReturnThis(),
-        update: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: null, error: null }),
-        then: jest.fn().mockResolvedValue({ data: [], error: null })
-      };
-    }
-
-    return createProductQueryBuilder();
+    const builder = createQueryBuilder();
+    return builder.from(table);
   })
 };
 
