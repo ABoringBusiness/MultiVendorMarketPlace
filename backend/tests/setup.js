@@ -1,24 +1,18 @@
 import { jest } from '@jest/globals';
-import { config } from 'dotenv';
+import dotenv from 'dotenv';
 
 // Load environment variables
-config();
+dotenv.config();
 
 // Mock Supabase client
 const mockSupabase = {
   auth: {
     signUp: jest.fn().mockResolvedValue({
-      data: { 
-        user: { id: 'test-user-id' },
-        session: { access_token: 'test-token' }
-      },
+      data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
       error: null
     }),
     signInWithPassword: jest.fn().mockResolvedValue({
-      data: { 
-        user: { id: 'test-user-id' },
-        session: { access_token: 'test-token' }
-      },
+      data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
       error: null
     }),
     getUser: jest.fn().mockResolvedValue({
@@ -48,12 +42,25 @@ const mockSupabase = {
 };
 
 // Mock database connection
-jest.mock('../database/connection.js', () => ({
+jest.unstable_mockModule('../database/connection.js', () => ({
+  default: mockSupabase,
   supabase: mockSupabase
-}), { virtual: true });
+}));
 
 // Mock UserModel
-jest.mock('../models/supabase/userModel.js', () => ({
+jest.unstable_mockModule('../models/supabase/userModel.js', () => ({
+  default: {
+    findByEmail: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockImplementation(data => Promise.resolve({
+      id: data.id || 'test-user-id',
+      email: data.email,
+      role: data.role,
+      name: data.name,
+      created_at: new Date().toISOString()
+    })),
+    findById: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue(null)
+  },
   UserModel: {
     findByEmail: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockImplementation(data => Promise.resolve({
@@ -66,49 +73,4 @@ jest.mock('../models/supabase/userModel.js', () => ({
     findById: jest.fn().mockResolvedValue(null),
     update: jest.fn().mockResolvedValue(null)
   }
-}), { virtual: true });
-
-// Mock Stripe
-const mockStripe = {
-  paymentIntents: {
-    create: jest.fn().mockResolvedValue({
-      id: 'pi_test',
-      client_secret: 'test_secret'
-    })
-  },
-  webhooks: {
-    constructEvent: jest.fn().mockReturnValue({
-      type: 'payment_intent.succeeded',
-      data: { object: { metadata: { order_id: 'test_order' } } }
-    })
-  }
-};
-
-jest.mock('stripe', () => jest.fn(() => mockStripe));
-      email: data.email,
-      role: data.role,
-      name: data.name,
-      created_at: new Date().toISOString()
-    })),
-    findById: jest.fn().mockResolvedValue(null),
-    update: jest.fn().mockResolvedValue(null)
-  }
 }));
-
-// Mock Stripe
-const mockStripe = {
-  paymentIntents: {
-    create: jest.fn().mockResolvedValue({
-      id: 'pi_test',
-      client_secret: 'test_secret'
-    })
-  },
-  webhooks: {
-    constructEvent: jest.fn().mockReturnValue({
-      type: 'payment_intent.succeeded',
-      data: { object: { metadata: { order_id: 'test_order' } } }
-    })
-  }
-};
-
-jest.mock('stripe', () => jest.fn(() => mockStripe));
