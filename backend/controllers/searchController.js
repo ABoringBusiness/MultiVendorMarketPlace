@@ -41,7 +41,7 @@ export const searchProducts = async (req, res) => {
       }
     }
 
-    // Apply text search filter
+    // Apply text search filter last to ensure all other filters are applied first
     if (q) {
       const searchLower = q.toLowerCase();
       filteredProducts = filteredProducts.filter(p => 

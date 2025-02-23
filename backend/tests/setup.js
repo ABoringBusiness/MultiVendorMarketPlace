@@ -80,6 +80,11 @@ const mockSupabase = {
       },
       error: null
     }),
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    gte: jest.fn().mockReturnThis(),
+    lte: jest.fn().mockReturnThis(),
+    or: jest.fn().mockReturnThis(),
     then: jest.fn().mockImplementation((callback) => {
       // Default test data
       const allProducts = [
