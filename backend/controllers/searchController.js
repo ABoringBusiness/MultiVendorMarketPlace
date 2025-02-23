@@ -10,12 +10,6 @@ export const searchProducts = async (req, res) => {
       .select('*')
       .eq('status', 'active');
 
-    // Apply search filter using ILIKE for case-insensitive search
-    if (q) {
-      const searchTerm = `%${q}%`;
-      query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`);
-    }
-
     // Apply category filter
     if (category) {
       query = query.eq('category_id', category);
@@ -27,6 +21,12 @@ export const searchProducts = async (req, res) => {
     }
     if (max_price !== undefined && max_price !== '') {
       query = query.lte('price', parseFloat(max_price));
+    }
+
+    // Apply search filter using ILIKE for case-insensitive search
+    if (q) {
+      const searchTerm = `%${q}%`;
+      query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`);
     }
 
     // Execute query and handle response
@@ -41,10 +41,34 @@ export const searchProducts = async (req, res) => {
       });
     }
 
-    // Always return an array, even if empty
+    // Filter results in memory to ensure all conditions are met
+    let filteredProducts = products || [];
+
+    // Apply category filter in memory
+    if (category) {
+      filteredProducts = filteredProducts.filter(p => p.category_id === category);
+    }
+
+    // Apply price range filter in memory
+    if (min_price !== undefined && min_price !== '') {
+      filteredProducts = filteredProducts.filter(p => p.price >= parseFloat(min_price));
+    }
+    if (max_price !== undefined && max_price !== '') {
+      filteredProducts = filteredProducts.filter(p => p.price <= parseFloat(max_price));
+    }
+
+    // Apply text search filter in memory
+    if (q) {
+      const searchLower = q.toLowerCase();
+      filteredProducts = filteredProducts.filter(p => 
+        p.title.toLowerCase().includes(searchLower) || 
+        p.description.toLowerCase().includes(searchLower)
+      );
+    }
+
     return res.status(200).json({
       success: true,
-      products: products || []
+      products: filteredProducts
     });
   } catch (error) {
     console.error('Error in search controller:', error);
