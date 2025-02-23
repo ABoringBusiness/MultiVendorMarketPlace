@@ -47,21 +47,24 @@ const mockUsers = {
 
 // Mock database state
 let products = [];
-let conditions = [];
-let updateData = null;
 
 // Reset database before each test
 beforeEach(() => {
   products = [...initialProducts];
-  conditions = [];
-  updateData = null;
   jest.clearAllMocks();
 });
 
 // Create a query builder that maintains proper chaining
-const createQueryBuilder = () => {
+const createProductQueryBuilder = () => {
+  let conditions = [];
+  let updateData = null;
+  let selectedFields = '*';
+
   const chain = {
-    select: jest.fn().mockReturnThis(),
+    select: jest.fn().mockImplementation((...fields) => {
+      selectedFields = fields.length ? fields.join(',') : '*';
+      return chain;
+    }),
     insert: jest.fn().mockImplementation((data) => {
       const newProduct = {
         id: 'new-id',
@@ -167,7 +170,7 @@ const mockSupabase = {
       };
     }
 
-    return createQueryBuilder();
+    return createProductQueryBuilder();
   })
 };
 
