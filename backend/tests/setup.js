@@ -69,12 +69,6 @@ const filterProducts = (items, conditions) => {
     });
   }
 
-  // If filtering products and no status condition was applied, filter for active only
-  if (items === products && !conditions.some(c => c.field === 'status')) {
-    result = result.filter(item => item.status === 'active');
-    console.log('Adding default active status filter:', result);
-  }
-
   console.log('Filter result:', result);
   return result;
 };
@@ -91,13 +85,16 @@ const createQueryBuilder = () => {
   const chain = {
     from: (tableName) => {
       state.table = tableName;
+      console.log('Setting table:', tableName);
       return chain;
     },
     select: (...fields) => {
       state.selectedFields = fields.length ? fields.join(',') : '*';
+      console.log('Setting fields:', state.selectedFields);
       return chain;
     },
     insert: (data) => {
+      console.log('Inserting data:', data);
       const newItem = {
         id: 'new-id',
         ...data,
@@ -107,6 +104,7 @@ const createQueryBuilder = () => {
       };
       if (state.table === 'products') {
         products.push(newItem);
+        console.log('Added new product:', newItem);
       }
       return {
         select: () => ({
@@ -116,10 +114,12 @@ const createQueryBuilder = () => {
     },
     update: (data) => {
       state.updateData = data;
+      console.log('Setting update data:', data);
       return chain;
     },
     eq: (field, value) => {
       state.conditions.push({ field, value });
+      console.log('Adding condition:', { field, value });
       return chain;
     },
     single: () => {
@@ -139,6 +139,7 @@ const createQueryBuilder = () => {
               updated_at: new Date().toISOString()
             };
             products[index] = updatedItem;
+            console.log('Updated product:', updatedItem);
             return { data: updatedItem, error: null };
           }
         }
@@ -181,6 +182,7 @@ const mockSupabase = {
     })
   },
   from: jest.fn().mockImplementation((table) => {
+    console.log('Creating query builder for table:', table);
     if (table === 'users') {
       return {
         select: jest.fn().mockReturnThis(),
