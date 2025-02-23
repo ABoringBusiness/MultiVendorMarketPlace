@@ -129,65 +129,49 @@ const createQueryBuilder = (tableName) => {
     return { data: result, error: null };
   };
 
-  const mockSelect = jest.fn().mockImplementation((...fields) => {
-    console.log('Selecting fields:', fields);
-    state.selectedFields = fields.length ? fields.join(',') : '*';
-    return chain;
-  });
+  const chain = {
+    select: (...fields) => {
+      console.log('Selecting fields:', fields);
+      state.selectedFields = fields.length ? fields.join(',') : '*';
+      return chain;
+    },
+    insert: (data) => {
+      console.log('Inserting data:', data);
+      const newItem = {
+        id: String(products.length + 1),
+        ...data,
+        status: data.status || 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      state.returnValue = newItem;
+      return chain;
+    },
+    update: (data) => {
+      console.log('Setting update data:', data);
+      state.updateData = data;
+      return chain;
+    },
+    eq: (field, value) => {
+      console.log('Adding condition:', { field, value });
+      state.conditions.push({ field, value: String(value) });
+      return chain;
+    },
+    single: () => {
+      console.log('Setting single mode');
+      state.isSingle = true;
+      return chain;
+    }
+  };
 
-  const mockInsert = jest.fn().mockImplementation((data) => {
-    console.log('Inserting data:', data);
-    const newItem = {
-      id: String(products.length + 1),
-      ...data,
-      status: data.status || 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    state.returnValue = newItem;
-    return chain;
-  });
-
-  const mockUpdate = jest.fn().mockImplementation((data) => {
-    console.log('Setting update data:', data);
-    state.updateData = data;
-    return chain;
-  });
-
-  const mockEq = jest.fn().mockImplementation((field, value) => {
-    console.log('Adding condition:', { field, value });
-    state.conditions.push({ field, value: String(value) });
-    return chain;
-  });
-
-  const mockSingle = jest.fn().mockImplementation(() => {
-    console.log('Setting single mode');
-    state.isSingle = true;
-    return chain;
-  });
-
-  const mockThen = jest.fn().mockImplementation((callback) => {
+  // Make the chain thenable
+  chain[Symbol.toStringTag] = 'Promise';
+  chain.then = (callback) => {
     console.log('Executing query');
     const result = executeQuery();
     console.log('Query result:', result);
     return Promise.resolve(result).then(callback);
-  });
-
-  const chain = {
-    select: mockSelect,
-    insert: mockInsert,
-    update: mockUpdate,
-    eq: mockEq,
-    single: mockSingle,
-    then: mockThen,
-    [Symbol.toStringTag]: 'Promise'
   };
-
-  // Make the chain thenable
-  Object.defineProperty(chain, 'then', {
-    enumerable: false,
-    value: mockThen
-  });
 
   return chain;
 };
@@ -220,7 +204,7 @@ const mockSupabase = {
       });
     })
   },
-  from: jest.fn().mockImplementation((table) => {
+  from: (table) => {
     console.log('Creating query builder for table:', table);
     if (table === 'users') {
       return {
@@ -236,7 +220,7 @@ const mockSupabase = {
     const builder = createQueryBuilder(table);
     console.log('Created query builder:', builder);
     return builder;
-  })
+  }
 };
 
 // Mock database connection
