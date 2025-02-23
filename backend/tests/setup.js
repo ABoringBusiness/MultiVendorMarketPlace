@@ -108,11 +108,7 @@ const mockSupabase = {
           updated_at: new Date().toISOString()
         };
         products.push(newProduct);
-        return {
-          select: () => ({
-            single: () => Promise.resolve({ data: newProduct, error: null })
-          })
-        };
+        return queryBuilder;
       }),
       update: jest.fn().mockImplementation((data) => {
         updateData = data;
@@ -155,11 +151,6 @@ const mockSupabase = {
         // Apply all conditions
         for (const { field, value } of conditions) {
           result = result.filter(item => item[field] === value);
-        }
-
-        // Filter out disabled products by default for list operations
-        if (!conditions.some(c => c.field === 'status')) {
-          result = result.filter(item => item.status === 'active');
         }
 
         // Always return at least an empty array
