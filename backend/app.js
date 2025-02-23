@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
-import { connection } from "./database/connection.js";
+import { supabase } from "./database/connection.js";
 import { errorMiddleware } from "./middlewares/error.js";
 import authRouter from "./router/auth.js";
 import userRouter from "./router/userRoutes.js";

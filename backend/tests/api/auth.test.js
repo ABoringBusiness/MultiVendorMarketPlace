@@ -1,5 +1,9 @@
 import request from 'supertest';
-import { app } from '../../app.js';
+import express from 'express';
+import { supabase } from '../../database/connection.js';
+import { ROLES } from '../../constants/roles.js';
+
+const app = express();
 import { supabase } from '../../database/connection.js';
 import { ROLES } from '../../constants/roles.js';
 
