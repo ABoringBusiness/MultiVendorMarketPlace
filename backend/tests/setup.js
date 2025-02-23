@@ -21,6 +21,9 @@ const stripeMock = {
   }
 };
 
+// Mock Stripe
+jest.mock('stripe', () => jest.fn(() => stripeMock));
+
 // Mock Supabase client
 jest.mock('../database/connection.js', () => ({
   supabase: {
@@ -59,11 +62,3 @@ jest.mock('../database/connection.js', () => ({
     }
   }
 }));
-
-// Mock Stripe
-jest.mock('stripe', () => jest.fn(() => stripeMock));
-
-// Reset all mocks before each test
-beforeEach(() => {
-  jest.clearAllMocks();
-});
