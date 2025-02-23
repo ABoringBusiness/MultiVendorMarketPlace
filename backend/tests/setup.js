@@ -71,19 +71,15 @@ const filterProducts = (items, conditions) => {
 };
 
 // Create a query builder that maintains proper chaining
-const createQueryBuilder = () => {
+const createQueryBuilder = (tableName) => {
   const state = {
     conditions: [],
     updateData: null,
     selectedFields: '*',
-    table: null
+    table: tableName
   };
 
   const chain = {
-    from: (tableName) => {
-      state.table = tableName;
-      return chain;
-    },
     select: (...fields) => {
       state.selectedFields = fields.length ? fields.join(',') : '*';
       return chain;
@@ -112,33 +108,35 @@ const createQueryBuilder = () => {
       state.conditions.push({ field, value });
       return chain;
     },
-    single: async () => {
+    single: () => {
       console.log('Executing single query with state:', state);
       const result = filterProducts(state.table === 'products' ? products : [], state.conditions);
       console.log('Single query result:', result);
       
-      if (state.updateData && result.length > 0) {
-        const index = products.findIndex(p => p.id === result[0].id);
-        if (index !== -1) {
-          const updatedItem = {
-            ...products[index],
-            ...state.updateData,
-            updated_at: new Date().toISOString()
-          };
-          products[index] = updatedItem;
-          return { data: updatedItem, error: null };
+      return Promise.resolve().then(() => {
+        if (state.updateData && result.length > 0) {
+          const index = products.findIndex(p => p.id === result[0].id);
+          if (index !== -1) {
+            const updatedItem = {
+              ...products[index],
+              ...state.updateData,
+              updated_at: new Date().toISOString()
+            };
+            products[index] = updatedItem;
+            return { data: updatedItem, error: null };
+          }
         }
-      }
-      return { 
-        data: result[0] || null,
-        error: result.length === 0 ? { message: 'Not found' } : null
-      };
+        return { 
+          data: result[0] || null,
+          error: result.length === 0 ? { message: 'Not found' } : null
+        };
+      });
     },
     then: (callback) => {
       console.log('Executing query with state:', state);
       const result = filterProducts(state.table === 'products' ? products : [], state.conditions);
       console.log('Query result:', result);
-      return callback({ data: result, error: null });
+      return Promise.resolve({ data: result, error: null }).then(callback);
     }
   };
 
@@ -176,9 +174,7 @@ const mockSupabase = {
         }))
       };
     }
-
-    const builder = createQueryBuilder();
-    return builder.from(table);
+    return createQueryBuilder(table);
   })
 };
 
