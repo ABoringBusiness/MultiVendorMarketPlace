@@ -5,54 +5,51 @@ import { config } from 'dotenv';
 config();
 
 // Mock Supabase client
+const mockSupabase = {
+  auth: {
+    signUp: jest.fn().mockResolvedValue({
+      data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
+      error: null
+    }),
+    signInWithPassword: jest.fn().mockResolvedValue({
+      data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
+      error: null
+    }),
+    getUser: jest.fn().mockResolvedValue({
+      data: { user: { id: 'test-user-id' } },
+      error: null
+    }),
+    signOut: jest.fn().mockResolvedValue({ error: null })
+  },
+  from: jest.fn(() => ({
+    select: jest.fn().mockReturnThis(),
+    insert: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
+    delete: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    neq: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue({ data: null, error: null })
+  }))
+};
+
 jest.mock('../database/connection.js', () => ({
-  supabase: {
-    auth: {
-      signUp: jest.fn().mockResolvedValue({
-        data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
-        error: null
-      }),
-      signInWithPassword: jest.fn().mockResolvedValue({
-        data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
-        error: null
-      }),
-      getUser: jest.fn().mockResolvedValue({
-        data: { user: { id: 'test-user-id' } },
-        error: null
-      }),
-      signOut: jest.fn().mockResolvedValue({ error: null })
-    },
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null })
-    }))
-  }
+  supabase: mockSupabase
 }));
 
 // Mock UserModel
+const mockUserModel = {
+  findByEmail: jest.fn().mockResolvedValue(null),
+  create: jest.fn().mockImplementation(data => Promise.resolve({ id: 'test-user-id', ...data })),
+  findById: jest.fn().mockResolvedValue(null),
+  update: jest.fn().mockResolvedValue(null)
+};
+
 jest.mock('../models/supabase/userModel.js', () => ({
-  UserModel: {
-    findByEmail: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockImplementation((data) => Promise.resolve({ id: 'test-user-id', ...data })),
-    findById: jest.fn().mockResolvedValue(null),
-    update: jest.fn().mockResolvedValue(null)
-  }
-}));
-      id: 'test-user-id',
-      ...data
-    })),
-    findById: jest.fn().mockResolvedValue(null),
-    update: jest.fn().mockResolvedValue(null)
-  }
+  UserModel: mockUserModel
 }));
 
 // Mock Stripe
-const stripeMock = {
+const mockStripe = {
   paymentIntents: {
     create: jest.fn().mockResolvedValue({
       id: 'pi_test',
@@ -67,44 +64,4 @@ const stripeMock = {
   }
 };
 
-// Mock Stripe
-jest.mock('stripe', () => jest.fn(() => stripeMock));
-
-// Mock Supabase client
-jest.mock('../database/connection.js', () => ({
-  supabase: {
-    auth: {
-      signUp: jest.fn().mockResolvedValue({
-        data: {
-          user: { id: 'test-user-id', email: 'test@example.com' },
-          session: { access_token: 'test-token' }
-        },
-        error: null
-      }),
-      signInWithPassword: jest.fn().mockResolvedValue({
-        data: {
-          user: { id: 'test-user-id', email: 'test@example.com' },
-          session: { access_token: 'test-token' }
-        },
-        error: null
-      }),
-      getUser: jest.fn().mockResolvedValue({
-        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
-        error: null
-      }),
-      signOut: jest.fn().mockResolvedValue({ error: null })
-    },
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null })
-    })),
-    storage: {
-      from: jest.fn()
-    }
-  }
-}));
+jest.mock('stripe', () => jest.fn(() => mockStripe));
