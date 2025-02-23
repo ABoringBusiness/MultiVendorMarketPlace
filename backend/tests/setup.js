@@ -116,7 +116,12 @@ const mockSupabase = {
       }),
       update: jest.fn().mockImplementation((data) => {
         updateData = data;
-        return queryBuilder;
+        return {
+          eq: (field, value) => {
+            conditions.push({ field, value });
+            return queryBuilder;
+          }
+        };
       }),
       eq: jest.fn().mockImplementation((field, value) => {
         conditions.push({ field, value });
@@ -160,6 +165,11 @@ const mockSupabase = {
         // Apply all conditions
         for (const { field, value } of conditions) {
           result = result.filter(item => item[field] === value);
+        }
+
+        // For list queries, filter by status='active' by default unless explicitly querying for status
+        if (!conditions.some(c => c.field === 'status')) {
+          result = result.filter(item => item.status === 'active');
         }
 
         // Always return at least an empty array
