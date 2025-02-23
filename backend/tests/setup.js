@@ -5,15 +5,16 @@ import { config } from 'dotenv';
 config();
 
 // Mock UserModel
-jest.mock('../models/supabase/userModel.js', () => {
-  const mockUserModel = {
-    findByEmail: jest.fn(),
-    create: jest.fn(),
-    findById: jest.fn(),
-    update: jest.fn()
-  };
-  return { UserModel: mockUserModel };
-});
+const mockUserModel = {
+  findByEmail: jest.fn().mockImplementation(() => Promise.resolve(null)),
+  create: jest.fn().mockImplementation((data) => Promise.resolve({ id: 'test-user-id', ...data })),
+  findById: jest.fn().mockImplementation(() => Promise.resolve(null)),
+  update: jest.fn().mockImplementation(() => Promise.resolve(null))
+};
+
+jest.mock('../models/supabase/userModel.js', () => ({
+  UserModel: mockUserModel
+}));
   UserModel: {
     findByEmail: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockImplementation((data) => Promise.resolve({
