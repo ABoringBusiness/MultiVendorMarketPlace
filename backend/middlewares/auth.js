@@ -1,30 +1,50 @@
-import { UserModel } from "../models/supabase/userModel.js";
-import jwt from "jsonwebtoken";
+import { supabase } from '../database/connection.js';
+import { ROLES, ROLE_MAPPINGS } from '../constants/roles.js';
 import ErrorHandler from "./error.js";
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 
 export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return next(new ErrorHandler("User not authenticated.", 400));
+  try {
+    // Get session from Supabase Auth
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) {
+      return next(new ErrorHandler("User not authenticated.", 401));
+    }
+
+    // Get user data from our users table
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError || !user) {
+      return next(new ErrorHandler("User not found.", 404));
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 401));
   }
-  const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-  const user = await UserModel.findById(decoded.id);
-  
-  if (!user) {
-    return next(new ErrorHandler("User not found.", 404));
-  }
-  
-  req.user = user;
-  next();
 });
 
 export const isAuthorized = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    const userRole = req.user.role;
+    const legacyRole = req.user.legacy_role;
+    
+    // Check if user has any of the required roles (new or legacy)
+    const hasPermission = roles.some(role => 
+      role === userRole || 
+      role === legacyRole || 
+      (legacyRole && role === ROLE_MAPPINGS[legacyRole])
+    );
+
+    if (!hasPermission) {
       return next(
         new ErrorHandler(
-          `${req.user.role} not allowed to access this resouce.`,
+          `${userRole} not allowed to access this resource.`,
           403
         )
       );
