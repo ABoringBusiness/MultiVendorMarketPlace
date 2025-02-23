@@ -1,7 +1,12 @@
 import request from 'supertest';
-import { app } from '../../app.js';
+import express from 'express';
 import { supabase } from '../../database/connection.js';
 import { ROLES } from '../../constants/roles.js';
+import authRouter from '../../router/auth.js';
+
+const app = express();
+app.use(express.json());
+app.use('/api/v1/auth', authRouter);
 
 describe('Authentication API', () => {
   beforeEach(async () => {
