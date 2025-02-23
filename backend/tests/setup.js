@@ -114,39 +114,64 @@ const mockSupabase = {
         }
       ];
 
-      // Return test data based on the query
-      if (this.mock.calls[0][0] === 'products') {
-        return Promise.resolve(callback({
-          data: allProducts,
-          error: null
-        }));
-      }
+      // Mock function to track calls
+      const mockFn = jest.fn();
       
-      // Mock user data for auth
-      if (this.mock.calls[0][0] === 'users') {
-        const mockUsers = {
-          'mock-seller-token': {
-            id: 'seller-id',
-            role: 'seller',
-            email: 'seller@test.com'
-          },
-          'mock-admin-token': {
-            id: 'admin-id',
-            role: 'admin',
-            email: 'admin@test.com'
-          }
-        };
+      // Return test data based on mock function calls
+      mockFn.mockImplementation((table) => {
+        if (table === 'products') {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: () => Promise.resolve({ data: allProducts[0], error: null }),
+                then: (cb) => cb({ data: allProducts, error: null })
+              })
+            }),
+            insert: () => ({
+              select: () => ({
+                single: () => Promise.resolve({ 
+                  data: { 
+                    id: 'new-product-id',
+                    title: 'New Product',
+                    description: 'New description',
+                    price: 149.99,
+                    category_id: '123e4567-e89b-12d3-a456-426614174000',
+                    status: 'active'
+                  }, 
+                  error: null 
+                })
+              })
+            }),
+            update: () => ({
+              eq: () => ({
+                select: () => ({
+                  single: () => Promise.resolve({ 
+                    data: { 
+                      id: '1',
+                      title: 'Updated Product',
+                      description: 'Updated description',
+                      price: 199.99,
+                      status: 'active'
+                    }, 
+                    error: null 
+                  })
+                })
+              })
+            })
+          };
+        }
         
-        return Promise.resolve(callback({
-          data: mockUsers[req.headers.authorization?.split(' ')[1]] || null,
-          error: null
-        }));
-      }
-      
-      return Promise.resolve(callback({
-        data: null,
-        error: null
-      }));
+        return {
+          select: () => ({
+            eq: () => ({
+              single: () => Promise.resolve({ data: null, error: null }),
+              then: (cb) => cb({ data: [], error: null })
+            })
+          })
+        };
+      });
+
+      return mockFn(arguments[0]);
 
       // Apply filters based on the query conditions
       for (const call of mockCalls) {
