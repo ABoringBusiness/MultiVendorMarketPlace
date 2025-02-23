@@ -85,11 +85,6 @@ const createQueryBuilder = (tableName) => {
   };
 
   const chain = {
-    from: (tableName) => {
-      state.table = tableName;
-      console.log('Setting table:', tableName);
-      return chain;
-    },
     select: (...fields) => {
       state.selectedFields = fields.length ? fields.join(',') : '*';
       console.log('Setting fields:', state.selectedFields);
@@ -186,7 +181,7 @@ const mockSupabase = {
       return Promise.resolve({ data: { user: { id: user.id } }, error: null });
     })
   },
-  from: jest.fn().mockImplementation((table) => {
+  from: (table) => {
     console.log('Creating query builder for table:', table);
     if (table === 'users') {
       return {
@@ -202,7 +197,7 @@ const mockSupabase = {
     const builder = createQueryBuilder(table);
     console.log('Created query builder:', builder);
     return builder;
-  })
+  }
 };
 
 // Mock database connection
