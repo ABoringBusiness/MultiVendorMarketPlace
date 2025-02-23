@@ -114,10 +114,37 @@ const mockSupabase = {
         }
       ];
 
-      // Return test data for all queries for now
-      // We'll make this more sophisticated as we add more tests
+      // Return test data based on the query
+      if (this.mock.calls[0][0] === 'products') {
+        return Promise.resolve(callback({
+          data: allProducts,
+          error: null
+        }));
+      }
+      
+      // Mock user data for auth
+      if (this.mock.calls[0][0] === 'users') {
+        const mockUsers = {
+          'mock-seller-token': {
+            id: 'seller-id',
+            role: 'seller',
+            email: 'seller@test.com'
+          },
+          'mock-admin-token': {
+            id: 'admin-id',
+            role: 'admin',
+            email: 'admin@test.com'
+          }
+        };
+        
+        return Promise.resolve(callback({
+          data: mockUsers[req.headers.authorization?.split(' ')[1]] || null,
+          error: null
+        }));
+      }
+      
       return Promise.resolve(callback({
-        data: allProducts,
+        data: null,
         error: null
       }));
 

@@ -1,182 +1,208 @@
-import { ProductModel } from "../models/supabase/productModel.js";
-import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
-import ErrorHandler from "../middlewares/error.js";
-import axios from "axios";
-import { ROLES } from "../constants/roles.js";
+import { supabase } from '../database/connection.js';
+import { ROLES } from '../constants/roles.js';
 
-// Create a new product (Seller only)
-export const createProduct = catchAsyncErrors(async (req, res, next) => {
-  // Check if user role is allowed
-  // Check authentication
-  if (!req.user || !req.user.role) {
-    return next(new ErrorHandler("Authentication required.", 401));
-  }
-
-  // Check if user is a seller
-  if (req.user.role.toUpperCase() !== ROLES.SELLER.toUpperCase()) {
-    return next(new ErrorHandler("Only sellers can create products.", 403));
-  }
-
-  let images = [];
-  if (process.env.NODE_ENV !== 'test') {
-    if (!req.files || Object.keys(req.files).length === 0) {
-      return next(new ErrorHandler("Product images required.", 400));
-    }
-
-    images = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
-
-    const allowedFormats = ["image/png", "image/jpeg", "image/webp"];
-    for (const image of images) {
-      if (!allowedFormats.includes(image.mimetype)) {
-        return next(new ErrorHandler("File format not supported.", 400));
-      }
-    }
-  }
-
-  const { title, description, price } = req.body;
-  if (!title || !description || !price) {
-    return next(new ErrorHandler("Please provide all required details.", 400));
-  }
-  
-  const category_id = req.body.category_id || 'default';
-
+export const listProducts = async (req, res) => {
   try {
-    const product = await ProductModel.create({
-      title,
-      description,
-      price: parseFloat(price),
-      category_id,
-      seller_id: process.env.NODE_ENV === 'test' ? 'test_user_seller' : req.user.id,
-      status: 'active',
-      images: process.env.NODE_ENV === 'test' ? ['test-image-1.jpg', 'test-image-2.jpg'] : (req.files?.images || [])
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('status', 'active');
+
+    if (error) {
+      console.error('Error fetching products:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error fetching products',
+        error: error.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      products: products || []
     });
+  } catch (error) {
+    console.error('Error in listProducts:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+export const getProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data: product, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      product
+    });
+  } catch (error) {
+    console.error('Error in getProduct:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+export const createProduct = async (req, res) => {
+  try {
+    // Check if user is a seller
+    if (req.user.role !== ROLES.SELLER) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only sellers can create products'
+      });
+    }
+
+    const { title, description, price, category_id } = req.body;
+    const { data: product, error } = await supabase
+      .from('products')
+      .insert({
+        title,
+        description,
+        price,
+        category_id,
+        seller_id: req.user.id,
+        status: 'active'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating product:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error creating product',
+        error: error.message
+      });
+    }
 
     return res.status(201).json({
       success: true,
-      message: "Product created successfully.",
-      product,
+      product
     });
   } catch (error) {
-    return next(new ErrorHandler(error.message || "Failed to create product.", 500));
+    console.error('Error in createProduct:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
   }
-});
+};
 
-// Get all products
-export const getAllProducts = catchAsyncErrors(async (req, res, next) => {
-  const { category_id, min_price, max_price } = req.query;
-  const options = {
-    category_id,
-    min_price: min_price ? parseFloat(min_price) : undefined,
-    max_price: max_price ? parseFloat(max_price) : undefined,
-    status: 'active'
-  };
-
-  const products = await ProductModel.findAll(options);
-  res.status(200).json({
-    success: true,
-    products,
-  });
-});
-
-// Get product details
-export const getProductDetails = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
-  const product = await ProductModel.findById(id);
-
-  if (!product) {
-    return next(new ErrorHandler("Product not found.", 404));
-  }
-
-  res.status(200).json({
-    success: true,
-    product,
-  });
-});
-
-// Update product (Seller only)
-export const updateProduct = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
-  const product = await ProductModel.findById(id);
-
-  if (!product) {
-    return next(new ErrorHandler("Product not found.", 404));
-  }
-
-  if (product.seller_id !== req.user.id) {
-    return next(new ErrorHandler("You can only update your own products.", 403));
-  }
-
-  const updateData = { ...req.body };
-  if (req.files?.images) {
-    const images = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
+export const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
     
-    const allowedFormats = ["image/png", "image/jpeg", "image/webp"];
-    for (const image of images) {
-      if (!allowedFormats.includes(image.mimetype)) {
-        return next(new ErrorHandler("File format not supported.", 400));
-      }
+    // Check if product exists and user owns it
+    const { data: product, error: fetchError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
     }
-    updateData.images = req.files.images;
+
+    // Check if user owns the product
+    if (product.seller_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this product'
+      });
+    }
+
+    const { title, description, price } = req.body;
+    const { data: updatedProduct, error } = await supabase
+      .from('products')
+      .update({ title, description, price })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating product:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error updating product',
+        error: error.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      product: updatedProduct
+    });
+  } catch (error) {
+    console.error('Error in updateProduct:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
   }
+};
 
-  const updatedProduct = await ProductModel.update(id, updateData);
+export const disableProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  res.status(200).json({
-    success: true,
-    message: "Product updated successfully.",
-    product: updatedProduct,
-  });
-});
+    // Check if user is an admin
+    if (req.user.role !== ROLES.ADMIN) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only admins can disable products'
+      });
+    }
 
-// Disable product (Admin/Seller only)
-export const disableProduct = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
-  const product = await ProductModel.findById(id);
+    const { data: product, error } = await supabase
+      .from('products')
+      .update({ status: 'disabled' })
+      .eq('id', id)
+      .select()
+      .single();
 
-  if (!product) {
-    return next(new ErrorHandler("Product not found.", 404));
+    if (error) {
+      console.error('Error disabling product:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error disabling product',
+        error: error.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      product
+    });
+  } catch (error) {
+    console.error('Error in disableProduct:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
   }
-
-  // Allow admin or the seller to disable
-  if (req.user.role !== ROLES.ADMIN && product.seller_id !== req.user.id) {
-    return next(new ErrorHandler("Not authorized to disable this product.", 403));
-  }
-
-  const updatedProduct = await ProductModel.update(id, { status: 'disabled' });
-
-  res.status(200).json({
-    success: true,
-    message: "Product disabled successfully.",
-    product: updatedProduct,
-  });
-});
-
-// Get seller's products
-export const getSellerProducts = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
-  const products = await ProductModel.findAll({ seller_id: id });
-
-  res.status(200).json({
-    success: true,
-    products,
-  });
-});
-
-// Search products
-export const searchProducts = catchAsyncErrors(async (req, res, next) => {
-  const { query, category_id, min_price, max_price } = req.query;
-  
-  const options = {
-    category_id,
-    min_price: min_price ? parseFloat(min_price) : undefined,
-    max_price: max_price ? parseFloat(max_price) : undefined,
-    status: 'active'
-  };
-
-  const products = await ProductModel.search(query, options);
-
-  res.status(200).json({
-    success: true,
-    products,
-  });
-});
+};
