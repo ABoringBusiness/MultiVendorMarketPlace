@@ -204,24 +204,20 @@ const mockSupabase = {
       });
     })
   },
-  from: (table) => {
+  from: jest.fn().mockImplementation((table) => {
     console.log('Creating query builder for table:', table);
     const builder = createQueryBuilder(table);
     console.log('Created query builder:', builder);
     return builder;
-  }
+  })
 };
 
 // Mock database connection
-jest.mock('../database/connection.js', () => {
-  const mock = {
-    __esModule: true,
-    default: mockSupabase,
-    supabase: mockSupabase
-  };
-  console.log('Mocking database connection with:', mock);
-  return mock;
-});
+jest.mock('../database/connection.js', () => ({
+  __esModule: true,
+  default: mockSupabase,
+  supabase: mockSupabase
+}));
 
 // Export mock data for tests
 export const testData = {
