@@ -23,12 +23,6 @@ export const searchProducts = async (req, res) => {
       query = query.lte('price', parseFloat(max_price));
     }
 
-    // Apply search filter using ILIKE for case-insensitive search
-    if (q) {
-      const searchTerm = `%${q}%`;
-      query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`);
-    }
-
     // Execute query and handle response
     const { data: products, error } = await query;
 
@@ -44,20 +38,7 @@ export const searchProducts = async (req, res) => {
     // Filter results in memory to ensure all conditions are met
     let filteredProducts = products || [];
 
-    // Apply category filter in memory
-    if (category) {
-      filteredProducts = filteredProducts.filter(p => p.category_id === category);
-    }
-
-    // Apply price range filter in memory
-    if (min_price !== undefined && min_price !== '') {
-      filteredProducts = filteredProducts.filter(p => p.price >= parseFloat(min_price));
-    }
-    if (max_price !== undefined && max_price !== '') {
-      filteredProducts = filteredProducts.filter(p => p.price <= parseFloat(max_price));
-    }
-
-    // Apply text search filter in memory
+    // Apply text search filter in memory for more accurate results
     if (q) {
       const searchLower = q.toLowerCase();
       filteredProducts = filteredProducts.filter(p => 
