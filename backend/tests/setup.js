@@ -122,6 +122,7 @@ const createProductQueryBuilder = () => {
     }),
     then: jest.fn().mockImplementation((callback) => {
       const result = filterProducts(products, conditions);
+      console.log('Filtered products:', result); // Debug log
       return callback({ data: result || [], error: null });
     })
   };
