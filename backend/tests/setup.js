@@ -36,7 +36,6 @@ jest.mock('../database/connection.js', () => ({
   supabase: mockSupabase
 }));
 
-// Mock UserModel
 // Mock Supabase client
 const mockSupabase = {
   auth: {
@@ -63,6 +62,7 @@ const mockSupabase = {
   from: jest.fn(() => ({
     insert: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
     single: jest.fn().mockResolvedValue({
       data: {
         id: 'test-user-id',
@@ -76,16 +76,28 @@ const mockSupabase = {
   }))
 };
 
+// Mock database connection
 jest.mock('../database/connection.js', () => ({
   supabase: mockSupabase
 }));
 
 // Mock UserModel
+const mockUserModel = {
+  findByEmail: jest.fn().mockResolvedValue(null),
+  create: jest.fn().mockImplementation(data => Promise.resolve({
+    id: data.id || 'test-user-id',
+    email: data.email,
+    role: data.role,
+    name: data.name,
+    created_at: new Date().toISOString()
+  })),
+  findById: jest.fn().mockResolvedValue(null),
+  update: jest.fn().mockResolvedValue(null)
+};
+
 jest.mock('../models/supabase/userModel.js', () => ({
-  UserModel: {
-    findByEmail: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockImplementation(data => Promise.resolve({
-      id: data.id || 'test-user-id',
+  UserModel: mockUserModel
+}));
       email: data.email,
       role: data.role,
       name: data.name,
