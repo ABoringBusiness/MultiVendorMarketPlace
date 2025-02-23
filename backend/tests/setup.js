@@ -11,9 +11,17 @@ const mockSupabase = {
       data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
       error: null
     }),
-    signInWithPassword: jest.fn().mockResolvedValue({
-      data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
-      error: null
+    signInWithPassword: jest.fn().mockImplementation(({ email, password }) => {
+      if (email === 'test@test.com' && password === 'wrong_password') {
+        return Promise.resolve({
+          data: { user: null, session: null },
+          error: { message: 'Invalid credentials' }
+        });
+      }
+      return Promise.resolve({
+        data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
+        error: null
+      });
     }),
     getUser: jest.fn().mockResolvedValue({
       data: { user: { id: 'test-user-id' } },
