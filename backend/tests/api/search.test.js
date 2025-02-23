@@ -55,8 +55,46 @@ describe('Search API', () => {
   });
 
   beforeEach(async () => {
-    // Clear test data
-    await supabase.from('products').delete().neq('id', '0');
+    try {
+      // Clear test data
+      await supabase.from('products').delete().neq('id', '0');
+      
+      // Create test products for each test
+      const products = [
+        {
+          title: 'Digital Art 1',
+          description: 'Beautiful digital art',
+          price: 99.99,
+          category_id: '123e4567-e89b-12d3-a456-426614174000',
+          status: 'active'
+        },
+        {
+          title: 'Photography Print',
+          description: 'High quality photo print',
+          price: 149.99,
+          category_id: '223e4567-e89b-12d3-a456-426614174000',
+          status: 'active'
+        },
+        {
+          title: 'Abstract Painting',
+          description: 'Modern abstract art',
+          price: 299.99,
+          category_id: '123e4567-e89b-12d3-a456-426614174000',
+          status: 'active'
+        }
+      ];
+
+      testProducts = await Promise.all(products.map(async (product) => {
+        const res = await request(app)
+          .post('/api/v1/products/create')
+          .set('Authorization', `Bearer ${sellerToken}`)
+          .send(product);
+        return res.body.product;
+      }));
+    } catch (error) {
+      console.error('Error in beforeEach:', error);
+      throw error;
+    }
   });
 
   afterAll(async () => {

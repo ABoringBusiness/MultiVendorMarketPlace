@@ -20,10 +20,10 @@ export const searchProducts = async (req, res) => {
     }
 
     // Apply price range filter
-    if (min_price) {
+    if (min_price !== undefined) {
       query = query.gte('price', parseFloat(min_price));
     }
-    if (max_price) {
+    if (max_price !== undefined) {
       query = query.lte('price', parseFloat(max_price));
     }
 
@@ -33,19 +33,22 @@ export const searchProducts = async (req, res) => {
       console.error('Error searching products:', error);
       return res.status(500).json({
         success: false,
-        message: 'Error searching products'
+        message: 'Error searching products',
+        error: error.message
       });
     }
 
+    // Ensure we always return an array
     return res.status(200).json({
       success: true,
-      products
+      products: products || []
     });
   } catch (error) {
     console.error('Error in search controller:', error);
     return res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
+      error: error.message
     });
   }
 };
