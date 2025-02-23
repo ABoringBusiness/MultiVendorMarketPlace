@@ -1,9 +1,12 @@
 import { config } from 'dotenv';
 config(); // Load environment variables first
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://ghwxuebuaeokvcyviatx.supabase.co';
+const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
