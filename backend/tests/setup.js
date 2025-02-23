@@ -114,8 +114,18 @@ const mockSupabase = {
         }
       ];
 
+      // Return data based on the table being queried
+      const tableName = this.mock.calls[0][0];
+      
+      if (tableName === 'products') {
+        return Promise.resolve(callback({
+          data: allProducts,
+          error: null
+        }));
+      }
+      
       return Promise.resolve(callback({
-        data: allProducts,
+        data: [],
         error: null
       }));
 

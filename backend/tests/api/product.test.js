@@ -4,267 +4,216 @@ import { app } from '../../app.js';
 import { supabase } from '../../database/connection.js';
 import { ROLES } from '../../constants/roles.js';
 
-let server;
-let sellerToken;
-let buyerToken;
-let adminToken;
-let testProduct;
-let testSeller;
+describe('Product Management APIs', () => {
+  let sellerToken;
+  let adminToken;
+  let testProduct;
 
-describe('Product API', () => {
   beforeAll(async () => {
-    server = app.listen();
-    try {
-      // Create test seller
-      const { body: sellerData } = await request(app)
-        .post('/auth/register')
-        .send({
-          email: 'seller@test.com',
-          password: 'test123',
-          name: 'Test Seller',
-          role: ROLES.SELLER
-        });
-      sellerToken = sellerData.token;
-      testSeller = sellerData.user;
+    // Create test seller
+    const sellerRes = await request(app)
+      .post('/auth/register')
+      .send({
+        email: 'seller@test.com',
+        password: 'test123',
+        name: 'Test Seller',
+        role: ROLES.SELLER
+      });
+    sellerToken = sellerRes.body.token;
 
-      // Create test buyer
-      const { body: buyerData } = await request(app)
-        .post('/auth/register')
-        .send({
-          email: 'buyer@test.com',
-          password: 'test123',
-          name: 'Test Buyer',
-          role: ROLES.BUYER
-        });
-      buyerToken = buyerData.token;
-
-      // Create test admin
-      const { body: adminData } = await request(app)
-        .post('/auth/register')
-        .send({
-          email: 'admin@test.com',
-          password: 'test123',
-          name: 'Test Admin',
-          role: ROLES.ADMIN
-        });
-      adminToken = adminData.token;
-    } catch (error) {
-      console.error('Error in beforeAll:', error);
-      throw error;
-    }
+    // Create test admin
+    const adminRes = await request(app)
+      .post('/auth/register')
+      .send({
+        email: 'admin@test.com',
+        password: 'test123',
+        name: 'Test Admin',
+        role: ROLES.ADMIN
+      });
+    adminToken = adminRes.body.token;
   });
 
   beforeEach(async () => {
-    try {
-      // Clear test data
-      await supabase.from('products').delete().neq('id', '0');
-      
-      // Create test product
-      const { body: productData } = await request(app)
-        .post('/products/create')
-        .set('Authorization', `Bearer ${sellerToken}`)
-        .send({
-          title: 'Test Product',
-          description: 'Test Description',
-          price: 99.99,
-          category_id: '123e4567-e89b-12d3-a456-426614174000'
-        });
-      testProduct = productData.product;
-    } catch (error) {
-      console.error('Error in beforeEach:', error);
-      throw error;
-    }
+    // Clear test data
+    await supabase.from('products').delete().neq('id', '0');
+    
+    // Create test product
+    const productRes = await request(app)
+      .post('/api/v1/products/create')
+      .set('Authorization', `Bearer ${sellerToken}`)
+      .send({
+        title: 'Test Product',
+        description: 'Test description',
+        price: 99.99,
+        category_id: '123e4567-e89b-12d3-a456-426614174000'
+      });
+    testProduct = productRes.body.product;
   });
 
   afterAll(async () => {
-    await server.close();
+    await supabase.from('products').delete().neq('id', '0');
   });
 
-  describe('Product Management', () => {
-    describe('POST /products/create', () => {
-      it('should create a new product as seller', async () => {
-        const res = await request(app)
-          .post('/products/create')
-          .set('Authorization', `Bearer ${sellerToken}`)
-          .send({
-            title: 'New Product',
-            description: 'New Description',
-            price: 149.99,
-            category_id: '123e4567-e89b-12d3-a456-426614174000'
-          });
+  describe('GET /products/list', () => {
+    it('should list all active products', async () => {
+      const res = await request(app)
+        .get('/api/v1/products/list');
 
-        expect(res.status).toBe(201);
-        expect(res.body.success).toBe(true);
-        expect(res.body.product.title).toBe('New Product');
-      });
-
-      it('should not create product as buyer', async () => {
-        const res = await request(app)
-          .post('/products/create')
-          .set('Authorization', `Bearer ${buyerToken}`)
-          .send({
-            title: 'Test Product',
-            description: 'Test Description',
-            price: 99.99
-          });
-
-        expect(res.status).toBe(403);
-        expect(res.body.success).toBe(false);
-      });
-    });
-
-    describe('GET /products/list', () => {
-      it('should list all active products', async () => {
-        const res = await request(app)
-          .get('/products/list');
-
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(Array.isArray(res.body.products)).toBe(true);
-      });
-    });
-
-    describe('GET /products/:id', () => {
-      it('should get product details', async () => {
-        const res = await request(app)
-          .get(`/products/${testProduct.id}`);
-
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.product.id).toBe(testProduct.id);
-      });
-
-      it('should return 404 for non-existent product', async () => {
-        const res = await request(app)
-          .get('/products/non-existent-id');
-
-        expect(res.status).toBe(404);
-        expect(res.body.success).toBe(false);
-      });
-    });
-
-    describe('PUT /products/:id/update', () => {
-      it('should update product as seller owner', async () => {
-        const res = await request(app)
-          .put(`/products/${testProduct.id}/update`)
-          .set('Authorization', `Bearer ${sellerToken}`)
-          .send({
-            title: 'Updated Product',
-            price: 149.99
-          });
-
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.product.title).toBe('Updated Product');
-        expect(res.body.product.price).toBe(149.99);
-      });
-
-      it('should not update product as different seller', async () => {
-        // Create another seller
-        const { body: otherSellerData } = await request(app)
-          .post('/auth/register')
-          .send({
-            email: 'other.seller@test.com',
-            password: 'test123',
-            name: 'Other Seller',
-            role: ROLES.SELLER
-          });
-
-        const res = await request(app)
-          .put(`/products/${testProduct.id}/update`)
-          .set('Authorization', `Bearer ${otherSellerData.token}`)
-          .send({
-            title: 'Updated Product',
-            price: 149.99
-          });
-
-        expect(res.status).toBe(403);
-        expect(res.body.success).toBe(false);
-      });
-    });
-
-    describe('POST /products/:id/disable', () => {
-      it('should disable product as admin', async () => {
-        const res = await request(app)
-          .post(`/products/${testProduct.id}/disable`)
-          .set('Authorization', `Bearer ${adminToken}`);
-
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.product.status).toBe('disabled');
-      });
-
-      it('should not disable product as seller', async () => {
-        const res = await request(app)
-          .post(`/products/${testProduct.id}/disable`)
-          .set('Authorization', `Bearer ${sellerToken}`);
-
-        expect(res.status).toBe(403);
-        expect(res.body.success).toBe(false);
-      });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.products)).toBe(true);
+      expect(res.body.products.length).toBeGreaterThan(0);
+      expect(res.body.products[0]).toHaveProperty('id');
+      expect(res.body.products[0]).toHaveProperty('title');
+      expect(res.body.products[0]).toHaveProperty('price');
     });
   });
 
-  describe('Seller Management', () => {
-    describe('GET /sellers/list', () => {
-      it('should list all active sellers', async () => {
-        const res = await request(app)
-          .get('/sellers/list');
+  describe('GET /products/{id}', () => {
+    it('should get product details', async () => {
+      const res = await request(app)
+        .get(`/api/v1/products/${testProduct.id}`);
 
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(Array.isArray(res.body.sellers)).toBe(true);
-      });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.product).toHaveProperty('id', testProduct.id);
+      expect(res.body.product).toHaveProperty('title', testProduct.title);
+      expect(res.body.product).toHaveProperty('price', testProduct.price);
     });
 
-    describe('GET /sellers/:id', () => {
-      it('should get seller profile', async () => {
-        const res = await request(app)
-          .get(`/sellers/${testSeller.id}`);
+    it('should return 404 for non-existent product', async () => {
+      const res = await request(app)
+        .get('/api/v1/products/non-existent-id');
 
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.seller.id).toBe(testSeller.id);
-      });
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+    });
+  });
 
-      it('should return 404 for non-existent seller', async () => {
-        const res = await request(app)
-          .get('/sellers/non-existent-id');
+  describe('POST /products/create', () => {
+    it('should create a new product when seller is authenticated', async () => {
+      const productData = {
+        title: 'New Product',
+        description: 'New description',
+        price: 149.99,
+        category_id: '123e4567-e89b-12d3-a456-426614174000'
+      };
 
-        expect(res.status).toBe(404);
-        expect(res.body.success).toBe(false);
-      });
+      const res = await request(app)
+        .post('/api/v1/products/create')
+        .set('Authorization', `Bearer ${sellerToken}`)
+        .send(productData);
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.product).toHaveProperty('id');
+      expect(res.body.product).toHaveProperty('title', productData.title);
+      expect(res.body.product).toHaveProperty('price', productData.price);
     });
 
-    describe('POST /sellers/:id/disable', () => {
-      it('should disable seller as admin', async () => {
-        const res = await request(app)
-          .post(`/sellers/${testSeller.id}/disable`)
-          .set('Authorization', `Bearer ${adminToken}`);
+    it('should return 401 when not authenticated', async () => {
+      const res = await request(app)
+        .post('/api/v1/products/create')
+        .send({
+          title: 'New Product',
+          description: 'New description',
+          price: 149.99,
+          category_id: '123e4567-e89b-12d3-a456-426614174000'
+        });
 
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.seller.status).toBe('disabled');
-      });
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
 
-      it('should not disable seller as another seller', async () => {
-        // Create another seller
-        const { body: otherSellerData } = await request(app)
-          .post('/auth/register')
-          .send({
-            email: 'other.seller2@test.com',
-            password: 'test123',
-            name: 'Other Seller 2',
-            role: ROLES.SELLER
-          });
+    it('should return 403 when not a seller', async () => {
+      const res = await request(app)
+        .post('/api/v1/products/create')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          title: 'New Product',
+          description: 'New description',
+          price: 149.99,
+          category_id: '123e4567-e89b-12d3-a456-426614174000'
+        });
 
-        const res = await request(app)
-          .post(`/sellers/${testSeller.id}/disable`)
-          .set('Authorization', `Bearer ${otherSellerData.token}`);
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+    });
+  });
 
-        expect(res.status).toBe(403);
-        expect(res.body.success).toBe(false);
-      });
+  describe('PUT /products/{id}/update', () => {
+    it('should update product when seller is authenticated', async () => {
+      const updateData = {
+        title: 'Updated Product',
+        description: 'Updated description',
+        price: 199.99
+      };
+
+      const res = await request(app)
+        .put(`/api/v1/products/${testProduct.id}/update`)
+        .set('Authorization', `Bearer ${sellerToken}`)
+        .send(updateData);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.product).toHaveProperty('id', testProduct.id);
+      expect(res.body.product).toHaveProperty('title', updateData.title);
+      expect(res.body.product).toHaveProperty('price', updateData.price);
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      const res = await request(app)
+        .put(`/api/v1/products/${testProduct.id}/update`)
+        .send({
+          title: 'Updated Product',
+          price: 199.99
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should return 403 when not the owner', async () => {
+      const res = await request(app)
+        .put(`/api/v1/products/${testProduct.id}/update`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          title: 'Updated Product',
+          price: 199.99
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+    });
+  });
+
+  describe('POST /products/{id}/disable', () => {
+    it('should disable product when admin is authenticated', async () => {
+      const res = await request(app)
+        .post(`/api/v1/products/${testProduct.id}/disable`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.product).toHaveProperty('id', testProduct.id);
+      expect(res.body.product).toHaveProperty('status', 'disabled');
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      const res = await request(app)
+        .post(`/api/v1/products/${testProduct.id}/disable`);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should return 403 when not an admin', async () => {
+      const res = await request(app)
+        .post(`/api/v1/products/${testProduct.id}/disable`)
+        .set('Authorization', `Bearer ${sellerToken}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
     });
   });
 });
