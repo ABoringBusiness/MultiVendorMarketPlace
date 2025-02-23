@@ -59,6 +59,8 @@ beforeEach(() => {
 const filterProducts = (items, conditions) => {
   console.log('Filtering products:', { items, conditions });
   let result = [...items];
+  
+  // Apply all conditions
   for (const condition of conditions) {
     result = result.filter(item => {
       const matches = item[condition.field] === condition.value;
@@ -66,20 +68,31 @@ const filterProducts = (items, conditions) => {
       return matches;
     });
   }
+
+  // If filtering products and no status condition was applied, filter for active only
+  if (items === products && !conditions.some(c => c.field === 'status')) {
+    result = result.filter(item => item.status === 'active');
+    console.log('Adding default active status filter:', result);
+  }
+
   console.log('Filter result:', result);
   return result;
 };
 
 // Create a query builder that maintains proper chaining
-const createQueryBuilder = (tableName) => {
+const createQueryBuilder = () => {
   const state = {
     conditions: [],
     updateData: null,
     selectedFields: '*',
-    table: tableName
+    table: null
   };
 
   const chain = {
+    from: (tableName) => {
+      state.table = tableName;
+      return chain;
+    },
     select: (...fields) => {
       state.selectedFields = fields.length ? fields.join(',') : '*';
       return chain;
@@ -88,6 +101,7 @@ const createQueryBuilder = (tableName) => {
       const newItem = {
         id: 'new-id',
         ...data,
+        status: data.status || 'active',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -110,7 +124,9 @@ const createQueryBuilder = (tableName) => {
     },
     single: () => {
       console.log('Executing single query with state:', state);
-      const result = filterProducts(state.table === 'products' ? products : [], state.conditions);
+      const items = state.table === 'products' ? products : [];
+      console.log('Items before filtering:', items);
+      const result = filterProducts(items, state.conditions);
       console.log('Single query result:', result);
       
       return Promise.resolve().then(() => {
@@ -134,7 +150,9 @@ const createQueryBuilder = (tableName) => {
     },
     then: (callback) => {
       console.log('Executing query with state:', state);
-      const result = filterProducts(state.table === 'products' ? products : [], state.conditions);
+      const items = state.table === 'products' ? products : [];
+      console.log('Items before filtering:', items);
+      const result = filterProducts(items, state.conditions);
       console.log('Query result:', result);
       return Promise.resolve({ data: result, error: null }).then(callback);
     }
@@ -174,7 +192,7 @@ const mockSupabase = {
         }))
       };
     }
-    return createQueryBuilder(table);
+    return createQueryBuilder().from(table);
   })
 };
 
