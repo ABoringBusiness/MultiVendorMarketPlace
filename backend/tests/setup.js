@@ -57,10 +57,16 @@ beforeEach(() => {
 
 // Helper function to filter products based on conditions
 const filterProducts = (items, conditions) => {
+  console.log('Filtering products:', { items, conditions });
   let result = [...items];
   for (const condition of conditions) {
-    result = result.filter(item => item[condition.field] === condition.value);
+    result = result.filter(item => {
+      const matches = item[condition.field] === condition.value;
+      console.log('Checking condition:', { item, condition, matches });
+      return matches;
+    });
   }
+  console.log('Filter result:', result);
   return result;
 };
 
@@ -106,8 +112,11 @@ const createQueryBuilder = () => {
       state.conditions.push({ field, value });
       return chain;
     },
-    single: () => {
+    single: async () => {
+      console.log('Executing single query with state:', state);
       const result = filterProducts(state.table === 'products' ? products : [], state.conditions);
+      console.log('Single query result:', result);
+      
       if (state.updateData && result.length > 0) {
         const index = products.findIndex(p => p.id === result[0].id);
         if (index !== -1) {
@@ -117,19 +126,19 @@ const createQueryBuilder = () => {
             updated_at: new Date().toISOString()
           };
           products[index] = updatedItem;
-          return Promise.resolve({ data: updatedItem, error: null });
+          return { data: updatedItem, error: null };
         }
       }
-      return Promise.resolve({ 
+      return { 
         data: result[0] || null,
         error: result.length === 0 ? { message: 'Not found' } : null
-      });
+      };
     },
     then: (callback) => {
-      console.log('Query state:', state);
+      console.log('Executing query with state:', state);
       const result = filterProducts(state.table === 'products' ? products : [], state.conditions);
-      console.log('Filtered results:', result);
-      return callback({ data: result || [], error: null });
+      console.log('Query result:', result);
+      return callback({ data: result, error: null });
     }
   };
 
