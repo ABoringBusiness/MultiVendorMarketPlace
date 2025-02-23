@@ -29,7 +29,7 @@ export const searchProducts = async (req, res) => {
       query = query.lte('price', parseFloat(max_price));
     }
 
-    // Execute query
+    // Execute query and handle response
     const { data: products, error } = await query;
 
     if (error) {

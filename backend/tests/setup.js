@@ -66,6 +66,10 @@ const mockSupabase = {
     delete: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     neq: jest.fn().mockReturnThis(),
+    or: jest.fn().mockReturnThis(),
+    ilike: jest.fn().mockReturnThis(),
+    gte: jest.fn().mockReturnThis(),
+    lte: jest.fn().mockReturnThis(),
     single: jest.fn().mockResolvedValue({
       data: {
         id: 'test-user-id',
@@ -75,6 +79,37 @@ const mockSupabase = {
         created_at: new Date().toISOString()
       },
       error: null
+    }),
+    then: jest.fn().mockImplementation((callback) => {
+      return Promise.resolve(callback({
+        data: [
+          {
+            id: '1',
+            title: 'Digital Art 1',
+            description: 'Beautiful digital art',
+            price: 99.99,
+            category_id: '123e4567-e89b-12d3-a456-426614174000',
+            status: 'active'
+          },
+          {
+            id: '2',
+            title: 'Photography Print',
+            description: 'High quality photo print',
+            price: 149.99,
+            category_id: '223e4567-e89b-12d3-a456-426614174000',
+            status: 'active'
+          },
+          {
+            id: '3',
+            title: 'Abstract Painting',
+            description: 'Modern abstract art',
+            price: 299.99,
+            category_id: '123e4567-e89b-12d3-a456-426614174000',
+            status: 'active'
+          }
+        ],
+        error: null
+      }));
     })
   })
 };
