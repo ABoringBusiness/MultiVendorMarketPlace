@@ -223,26 +223,31 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Can only update paid orders.", 400));
   }
 
-  const { data: updatedOrder, error: updateError } = await supabase
-    .from('orders')
-    .update({
-      status,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select()
-    .single();
+  try {
+    const { data: updatedOrder, error: updateError } = await supabase
+      .from('orders')
+      .update({
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
-  if (updateError) {
-    console.error('Error updating order:', updateError);
+    if (updateError) {
+      console.error('Error updating order:', updateError);
+      return next(new ErrorHandler("Failed to update order", 500));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Order ${status} successfully.`,
+      order: updatedOrder
+    });
+  } catch (error) {
+    console.error('Error in updating order:', error);
     return next(new ErrorHandler("Failed to update order", 500));
   }
-
-  res.status(200).json({
-    success: true,
-    message: `Order ${status} successfully.`,
-    order: updatedOrder
-  });
 });
 
 // Handle Stripe webhook
