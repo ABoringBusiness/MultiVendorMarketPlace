@@ -188,12 +188,16 @@ const createQueryBuilder = (tableName) => {
       console.log('Executing query with state:', state);
       const result = executeQuery();
       console.log('Query execution result:', result);
-      // Reset state after query execution
-      state.conditions = [];
-      state.updateData = null;
-      state.selectedFields = '*';
-      state.returnValue = null;
-      state.isSingle = false;
+      // Create a new state object for the next query
+      const newState = {
+        conditions: [],
+        updateData: null,
+        selectedFields: '*',
+        table: state.table,
+        returnValue: null,
+        isSingle: false
+      };
+      Object.assign(state, newState);
       console.log('Reset state:', state);
       return Promise.resolve(result).then(callback);
     }
