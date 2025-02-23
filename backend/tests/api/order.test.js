@@ -14,56 +14,65 @@ describe('Order API', () => {
 
   beforeAll(async () => {
     server = app.listen();
-    // Create test seller
-    const sellerRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'seller@test.com',
-        password: 'test123',
-        name: 'Test Seller',
-        role: ROLES.SELLER
-      });
-    sellerToken = sellerRes.body.token;
+    try {
+      // Create test seller
+      const sellerRes = await request(app)
+        .post('/auth/register')
+        .send({
+          email: 'seller@test.com',
+          password: 'test123',
+          name: 'Test Seller',
+          role: ROLES.SELLER
+        });
+      sellerToken = sellerRes.body.token;
 
-    // Create test buyer
-    const buyerRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'buyer@test.com',
-        password: 'test123',
-        name: 'Test Buyer',
-        role: ROLES.BUYER
-      });
-    buyerToken = buyerRes.body.token;
-
-    // Create test product
-    const productRes = await request(app)
-      .post('/products/create')
-      .set('Authorization', `Bearer ${sellerToken}`)
-      .send({
-        title: 'Test Product',
-        description: 'Test Description',
-        price: 99.99
-      });
-    testProduct = productRes.body.product;
+      // Create test buyer
+      const buyerRes = await request(app)
+        .post('/auth/register')
+        .send({
+          email: 'buyer@test.com',
+          password: 'test123',
+          name: 'Test Buyer',
+          role: ROLES.BUYER
+        });
+      buyerToken = buyerRes.body.token;
+    } catch (error) {
+      console.error('Error in beforeAll:', error);
+      throw error;
+    }
   });
 
   beforeEach(async () => {
-    // Clear test data
-    await supabase.from('orders').delete().neq('id', '0');
-    await supabase.from('products').delete().neq('id', '0');
-    
-    // Create test product for each test
-    const productRes = await request(app)
-      .post('/products/create')
-      .set('Authorization', `Bearer ${sellerToken}`)
-      .send({
-        title: 'Test Product',
-        description: 'Test Description',
-        price: 99.99,
-        category_id: '123e4567-e89b-12d3-a456-426614174000'
-      });
-    testProduct = productRes.body.product;
+    try {
+      // Clear test data
+      await supabase.from('orders').delete().neq('id', '0');
+      await supabase.from('products').delete().neq('id', '0');
+      
+      // Create test product for each test
+      const productRes = await request(app)
+        .post('/products/create')
+        .set('Authorization', `Bearer ${sellerToken}`)
+        .send({
+          title: 'Test Product',
+          description: 'Test Description',
+          price: 99.99,
+          category_id: '123e4567-e89b-12d3-a456-426614174000'
+        });
+      testProduct = productRes.body.product;
+
+      // Create test order
+      const orderRes = await request(app)
+        .post('/orders/create')
+        .set('Authorization', `Bearer ${buyerToken}`)
+        .send({
+          product_id: testProduct.id,
+          quantity: 1
+        });
+      testOrder = orderRes.body.order;
+    } catch (error) {
+      console.error('Error in beforeEach:', error);
+      throw error;
+    }
   });
 
   afterAll(async () => {

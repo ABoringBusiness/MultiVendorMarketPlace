@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 import dotenv from 'dotenv';
+import { supabase } from '../database/connection.js';
 
 // Load environment variables
 dotenv.config();
