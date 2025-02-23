@@ -44,24 +44,21 @@ const mockSupabase = {
     })
   },
   from: jest.fn().mockImplementation((table) => {
-    let queryData = table === 'products' ? [...testProducts] : [];
+    let queryData = [...testProducts];
     let conditions = [];
     let updateData = null;
+    let insertData = null;
 
     const queryBuilder = {
       select: jest.fn().mockReturnThis(),
       insert: jest.fn().mockImplementation((data) => {
-        const newProduct = {
+        insertData = {
           id: 'new-id',
           ...data,
-          status: 'active',
-          seller_id: 'seller-id'
+          status: 'active'
         };
-        return {
-          select: () => ({
-            single: () => Promise.resolve({ data: newProduct, error: null })
-          })
-        };
+        queryData.push(insertData);
+        return queryBuilder;
       }),
       update: jest.fn().mockImplementation((data) => {
         updateData = data;
@@ -72,25 +69,42 @@ const mockSupabase = {
         return queryBuilder;
       }),
       single: jest.fn().mockImplementation(() => {
-        const filtered = queryData.filter(item =>
-          conditions.every(({ field, value }) => item[field] === value)
-        );
+        let result = queryData;
+        
+        // Apply all conditions
+        conditions.forEach(({ field, value }) => {
+          result = result.filter(item => item[field] === value);
+        });
 
-        if (updateData && filtered.length > 0) {
-          const updatedItem = { ...filtered[0], ...updateData };
-          return Promise.resolve({ data: updatedItem, error: null });
+        // Handle updates
+        if (updateData && result.length > 0) {
+          const updatedItem = { ...result[0], ...updateData };
+          const index = queryData.findIndex(item => item.id === result[0].id);
+          if (index !== -1) {
+            queryData[index] = updatedItem;
+            return Promise.resolve({ data: updatedItem, error: null });
+          }
+        }
+
+        // Handle inserts
+        if (insertData) {
+          return Promise.resolve({ data: insertData, error: null });
         }
 
         return Promise.resolve({ 
-          data: filtered[0] || null,
-          error: filtered.length === 0 ? { message: 'Not found' } : null
+          data: result[0] || null,
+          error: result.length === 0 ? { message: 'Not found' } : null
         });
       }),
       then: jest.fn().mockImplementation((callback) => {
-        const filtered = queryData.filter(item =>
-          conditions.every(({ field, value }) => item[field] === value)
-        );
-        return callback({ data: filtered, error: null });
+        let result = queryData;
+        
+        // Apply all conditions
+        conditions.forEach(({ field, value }) => {
+          result = result.filter(item => item[field] === value);
+        });
+
+        return callback({ data: result, error: null });
       })
     };
 
