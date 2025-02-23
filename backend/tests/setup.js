@@ -179,12 +179,15 @@ const createQueryBuilder = (tableName) => {
     update: mockUpdate,
     eq: mockEq,
     single: mockSingle,
-    then: mockThen
+    then: mockThen,
+    [Symbol.toStringTag]: 'Promise'
   };
 
   // Make the chain thenable
-  chain[Symbol.toStringTag] = 'Promise';
-  chain.then = mockThen;
+  Object.defineProperty(chain, 'then', {
+    enumerable: false,
+    value: mockThen
+  });
 
   return chain;
 };
