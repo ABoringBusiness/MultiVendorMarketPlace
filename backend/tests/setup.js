@@ -14,7 +14,9 @@ const initialProducts = [
     price: 99.99,
     category_id: '123e4567-e89b-12d3-a456-426614174000',
     seller_id: 'seller-id',
-    status: 'active'
+    status: 'active',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   },
   {
     id: '2',
@@ -23,7 +25,9 @@ const initialProducts = [
     price: 149.99,
     category_id: '223e4567-e89b-12d3-a456-426614174000',
     seller_id: 'seller-id',
-    status: 'active'
+    status: 'active',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
 ];
 
@@ -266,7 +270,10 @@ const mockSupabase = {
           },
           orderBy: () => chain,
           limit: () => chain,
-          select: () => chain
+          select: () => chain,
+          in: () => chain,
+          match: () => chain,
+          ilike: () => chain
         };
         return chain;
       }),
@@ -298,8 +305,10 @@ const mockSupabase = {
                     }
                   }
                   return Promise.resolve({ data: null, error: { message: 'Not found' } });
-                }
-              })
+                })
+              }),
+              match: () => chain,
+              ilike: () => chain
             };
           }
         };
