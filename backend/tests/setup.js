@@ -143,7 +143,6 @@ const createQueryBuilder = (tableName) => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      products.push(newItem);
       state.returnValue = newItem;
       return chain;
     },
@@ -168,6 +167,15 @@ const createQueryBuilder = (tableName) => {
       console.log('Query result:', result);
       return Promise.resolve(result).then(callback);
     }
+  };
+
+  // Make the chain thenable
+  chain[Symbol.toStringTag] = 'Promise';
+  chain.then = (callback) => {
+    console.log('Executing query');
+    const result = executeQuery();
+    console.log('Query result:', result);
+    return Promise.resolve(result).then(callback);
   };
 
   return chain;
