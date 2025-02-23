@@ -15,6 +15,38 @@ describe('Product API', () => {
 
   beforeAll(async () => {
     server = app.listen();
+    
+    // Create test users
+    const sellerRes = await request(app)
+      .post('/auth/register')
+      .send({
+        email: 'seller@test.com',
+        password: 'test123',
+        name: 'Test Seller',
+        role: ROLES.SELLER
+      });
+    sellerToken = sellerRes.body.token;
+    testSeller = sellerRes.body.user;
+
+    const buyerRes = await request(app)
+      .post('/auth/register')
+      .send({
+        email: 'buyer@test.com',
+        password: 'test123',
+        name: 'Test Buyer',
+        role: ROLES.BUYER
+      });
+    buyerToken = buyerRes.body.token;
+
+    const adminRes = await request(app)
+      .post('/auth/register')
+      .send({
+        email: 'admin@test.com',
+        password: 'test123',
+        name: 'Test Admin',
+        role: ROLES.ADMIN
+      });
+    adminToken = adminRes.body.token;
     // Create test seller
     const sellerRes = await request(app)
       .post('/auth/register')
@@ -51,8 +83,25 @@ describe('Product API', () => {
   });
 
   beforeEach(async () => {
-    // Clear test data
-    await supabase.from('products').delete().neq('id', '0');
+    try {
+      // Clear test data
+      await supabase.from('products').delete().neq('id', '0');
+      
+      // Create test product
+      const productRes = await request(app)
+        .post('/products/create')
+        .set('Authorization', `Bearer ${sellerToken}`)
+        .send({
+          title: 'Test Product',
+          description: 'Test Description',
+          price: 99.99,
+          category_id: '123e4567-e89b-12d3-a456-426614174000'
+        });
+      testProduct = productRes.body.product;
+    } catch (error) {
+      console.error('Error in beforeEach:', error);
+      throw error;
+    }
   });
 
   afterAll(async () => {
