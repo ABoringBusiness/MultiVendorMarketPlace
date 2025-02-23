@@ -31,8 +31,7 @@ afterAll(async () => {
     console.error('Error cleaning up test data:', error);
   }
   
-  // Close database connection
-  await supabase.removeAllChannels();
+  // No need to explicitly close Supabase connection in tests
 });
 
 // Mock Supabase client
