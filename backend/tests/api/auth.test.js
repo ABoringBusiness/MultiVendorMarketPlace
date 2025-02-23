@@ -15,21 +15,22 @@ app.use('/api/v1/auth', authRouter);
 app.use(errorMiddleware);
 
 describe('Authentication API', () => {
+  let mockUser;
+
   beforeEach(() => {
     // Reset mock implementations
     jest.resetAllMocks();
-  });
 
-  beforeAll(() => {
     // Setup default mock responses for UserModel
-    const mockUser = {
+    mockUser = {
       id: 'test-user-id',
       email: 'test@example.com',
       role: ROLES.BUYER
     };
 
-    UserModel.findByEmail.mockImplementation(() => Promise.resolve(null));
-    UserModel.create.mockImplementation((data) => Promise.resolve({ ...mockUser, ...data }));
+    // Mock UserModel methods
+    jest.spyOn(UserModel, 'findByEmail').mockImplementation(() => Promise.resolve(null));
+    jest.spyOn(UserModel, 'create').mockImplementation((data) => Promise.resolve({ ...mockUser, ...data }));
   });
 
   describe('POST /auth/register', () => {
