@@ -40,6 +40,10 @@ const options = {
         name: "Category",
         description: "Endpoints related to product categories",
       },
+      {
+        name: "Product",
+        description: "Endpoints related to products",
+      },
     ],
   },
   apis: ["./src/routes/*.js"],

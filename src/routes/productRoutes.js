@@ -1,21 +1,21 @@
-'use strict';
-const express = require('express');
+const express = require("express");
+const {
+  createProduct,
+  getAllProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct,
+  toggleProductStatus,
+} = require("../controllers/productController");
+const authMiddleware = require("../middleware/authMiddleware");
+
 const router = express.Router();
-const productController = require('../controllers/productController');
-const authMiddleware = require('../middlewares/auth'); // Ensure you have an auth middleware
 
 /**
  * @swagger
- * tags:
- *   name: Product
- *   description: Product & Inventory Management endpoints
- */
-
-/**
- * @swagger
- * /api/products:
+ * /products:
  *   post:
- *     summary: Create a new product (Vendor)
+ *     summary: Create a new product (Seller only)
  *     tags: [Product]
  *     security:
  *       - bearerAuth: []
@@ -26,79 +26,70 @@ const authMiddleware = require('../middlewares/auth'); // Ensure you have an aut
  *           schema:
  *             type: object
  *             required:
- *               - name
+ *               - title
  *               - price
+ *               - categoryId
  *             properties:
- *               name:
+ *               title:
  *                 type: string
- *                 example: "Awesome Product"
  *               description:
  *                 type: string
- *                 example: "A detailed description of the awesome product."
  *               price:
  *                 type: number
- *                 example: 99.99
- *               inventory_quantity:
- *                 type: number
- *                 example: 50
- *               category:
+ *               imageUrl:
  *                 type: string
- *                 example: "Electronics"
- *               image_url:
+ *               categoryId:
  *                 type: string
- *                 example: "https://example.com/product.jpg"
  *     responses:
  *       201:
- *         description: Product created successfully.
+ *         description: Product created successfully
  */
-router.post('/', authMiddleware, productController.createProduct);
+router.post("/", authMiddleware, createProduct);
 
 /**
  * @swagger
- * /api/products:
+ * /products:
  *   get:
- *     summary: Retrieve a list of all products
+ *     summary: Get all products (filter by category optional)
  *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *         description: Filter products by category
  *     responses:
  *       200:
- *         description: A list of products.
+ *         description: List of products
  */
-router.get('/', productController.getProducts);
+router.get("/", getAllProducts);
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /products/{id}:
  *   get:
- *     summary: Retrieve product details by ID
+ *     summary: Get a single product by ID
  *     tags: [Product]
  *     parameters:
  *       - in: path
  *         name: id
- *         schema:
- *           type: integer
  *         required: true
- *         description: The product ID.
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: Product details.
+ *         description: Product retrieved successfully
  */
-router.get('/:id', productController.getProductById);
+router.get("/:id", getProductById);
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /products/{id}:
  *   put:
- *     summary: Update an existing product (Vendor)
+ *     summary: Update a product (Seller only)
  *     tags: [Product]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: The product ID.
  *     requestBody:
  *       required: true
  *       content:
@@ -106,43 +97,58 @@ router.get('/:id', productController.getProductById);
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               title:
  *                 type: string
  *               description:
  *                 type: string
  *               price:
  *                 type: number
- *               inventory_quantity:
- *                 type: number
- *               category:
+ *               imageUrl:
  *                 type: string
- *               image_url:
+ *               categoryId:
  *                 type: string
  *     responses:
  *       200:
- *         description: Product updated successfully.
+ *         description: Product updated successfully
  */
-router.put('/:id', authMiddleware, productController.updateProduct);
+router.put("/:id", authMiddleware, updateProduct);
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /products/{id}:
  *   delete:
- *     summary: Delete a product (Vendor)
+ *     summary: Delete a product (Seller only)
+ *     tags: [Product]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Product deleted successfully
+ */
+router.delete("/:id", authMiddleware, deleteProduct);
+
+/**
+ * @swagger
+ * /products/{id}/toggle-status:
+ *   post:
+ *     summary: Toggle enable/disable a product
  *     tags: [Product]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
- *         schema:
- *           type: integer
  *         required: true
- *         description: The product ID.
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: Product deleted successfully.
+ *         description: Product status updated successfully
+ *       403:
+ *         description: Unauthorized action
+ *       404:
+ *         description: Product not found
  */
-router.delete('/:id', authMiddleware, productController.deleteProduct);
+router.post("/:id/toggle-status", authMiddleware, toggleProductStatus);
 
 module.exports = router;

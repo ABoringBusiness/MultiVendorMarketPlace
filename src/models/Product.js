@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 const User = require("./User");
+const Category = require("./Category");
 
 const Product = sequelize.define("Product", {
   id: {
@@ -13,6 +14,15 @@ const Product = sequelize.define("Product", {
     allowNull: false,
     references: {
       model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  categoryId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Categories",
       key: "id",
     },
     onDelete: "CASCADE",
@@ -41,8 +51,11 @@ const Product = sequelize.define("Product", {
   timestamps: true,
 });
 
-// Define association
+// Define associations
 User.hasMany(Product, { foreignKey: "sellerId", onDelete: "CASCADE" });
 Product.belongsTo(User, { foreignKey: "sellerId" });
+
+Category.hasMany(Product, { foreignKey: "categoryId", onDelete: "CASCADE" });
+Product.belongsTo(Category, { foreignKey: "categoryId" });
 
 module.exports = Product;
