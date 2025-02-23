@@ -1,9 +1,22 @@
 import { jest } from '@jest/globals';
+import { jest } from '@jest/globals';
 import { config } from 'dotenv';
-import Stripe from 'stripe';
 
 // Load environment variables
 config();
+
+// Mock UserModel
+jest.mock('../models/supabase/userModel.js', () => ({
+  UserModel: {
+    findByEmail: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockImplementation((data) => Promise.resolve({
+      id: 'test-user-id',
+      ...data
+    })),
+    findById: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue(null)
+  }
+}));
 
 // Mock Stripe
 const stripeMock = {

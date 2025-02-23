@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import cookieParser from 'cookie-parser';
@@ -9,7 +9,9 @@ import { errorMiddleware } from '../../middlewares/error.js';
 
 const app = express();
 app.use(express.json());
-app.use('/api/v1/auth', authRouter);
+app.use(cookieParser());
+app.use('/auth', authRouter);
+app.use(errorMiddleware);
 
 describe('Authentication API', () => {
   beforeEach(() => {
