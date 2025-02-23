@@ -114,8 +114,34 @@ const mockSupabase = {
           })
         };
       }),
-      select: jest.fn().mockImplementation(() => {
-        return queryBuilder;
+      select: jest.fn().mockImplementation((...fields) => {
+        return {
+          ...queryBuilder,
+          eq: (field, value) => {
+            conditions.push({ field, value });
+            return queryBuilder;
+          },
+          single: () => {
+            let result = [...products];
+            for (const { field, value } of conditions) {
+              result = result.filter(item => item[field] === value);
+            }
+            return Promise.resolve({ 
+              data: result[0] || null,
+              error: result.length === 0 ? { message: 'Not found' } : null
+            });
+          },
+          then: (callback) => {
+            let result = [...products];
+            for (const { field, value } of conditions) {
+              result = result.filter(item => item[field] === value);
+            }
+            if (!conditions.some(c => c.field === 'status')) {
+              result = result.filter(item => item.status === 'active');
+            }
+            return callback({ data: result || [], error: null });
+          }
+        };
       }),
       update: jest.fn().mockImplementation((data) => {
         updateData = data;
