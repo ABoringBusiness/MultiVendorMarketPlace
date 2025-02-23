@@ -188,6 +188,13 @@ const createQueryBuilder = (tableName) => {
       console.log('Executing query with state:', state);
       const result = executeQuery();
       console.log('Query execution result:', result);
+      // Reset state after query execution
+      state.conditions = [];
+      state.updateData = null;
+      state.selectedFields = '*';
+      state.returnValue = null;
+      state.isSingle = false;
+      console.log('Reset state:', state);
       return Promise.resolve(result).then(callback);
     }
   };
