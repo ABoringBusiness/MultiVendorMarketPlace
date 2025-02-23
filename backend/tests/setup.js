@@ -8,11 +8,17 @@ config();
 const mockSupabase = {
   auth: {
     signUp: jest.fn().mockResolvedValue({
-      data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
+      data: { 
+        user: { id: 'test-user-id' },
+        session: { access_token: 'test-token' }
+      },
       error: null
     }),
     signInWithPassword: jest.fn().mockResolvedValue({
-      data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
+      data: { 
+        user: { id: 'test-user-id' },
+        session: { access_token: 'test-token' }
+      },
       error: null
     }),
     getUser: jest.fn().mockResolvedValue({
@@ -22,47 +28,12 @@ const mockSupabase = {
     signOut: jest.fn().mockResolvedValue({ error: null })
   },
   from: jest.fn(() => ({
-    select: jest.fn().mockReturnThis(),
     insert: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
     update: jest.fn().mockReturnThis(),
     delete: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     neq: jest.fn().mockReturnThis(),
-    single: jest.fn().mockResolvedValue({ data: null, error: null })
-  }))
-};
-
-jest.mock('../database/connection.js', () => ({
-  supabase: mockSupabase
-}));
-
-// Mock Supabase client
-const mockSupabase = {
-  auth: {
-    signUp: jest.fn().mockResolvedValue({
-      data: { 
-        user: { id: 'test-user-id' },
-        session: { access_token: 'test-token' }
-      },
-      error: null
-    }),
-    signInWithPassword: jest.fn().mockResolvedValue({
-      data: { 
-        user: { id: 'test-user-id' },
-        session: { access_token: 'test-token' }
-      },
-      error: null
-    }),
-    getUser: jest.fn().mockResolvedValue({
-      data: { user: { id: 'test-user-id' } },
-      error: null
-    }),
-    signOut: jest.fn().mockResolvedValue({ error: null })
-  },
-  from: jest.fn(() => ({
-    insert: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
     single: jest.fn().mockResolvedValue({
       data: {
         id: 'test-user-id',
