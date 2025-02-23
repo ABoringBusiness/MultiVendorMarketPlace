@@ -302,7 +302,7 @@ const mockSupabase = {
                     }
                   }
                   return Promise.resolve({ data: null, error: { message: 'Not found' } });
-                })
+                }
               })
             };
           }
