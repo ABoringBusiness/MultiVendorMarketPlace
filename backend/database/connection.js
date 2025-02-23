@@ -3,7 +3,7 @@ config(); // Load environment variables first
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseUrl = 'https://ghwxuebuaeokvcyviatx.supabase.co';
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
