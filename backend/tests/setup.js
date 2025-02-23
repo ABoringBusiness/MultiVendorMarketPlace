@@ -204,12 +204,12 @@ const mockSupabase = {
       });
     })
   },
-  from: jest.fn().mockImplementation((table) => {
+  from: (table) => {
     console.log('Creating query builder for table:', table);
     const builder = createQueryBuilder(table);
     console.log('Created query builder:', builder);
     return builder;
-  })
+  }
 };
 
 // Mock database connection

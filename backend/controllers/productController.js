@@ -23,7 +23,7 @@ export const listProducts = async (req, res) => {
     }
 
     // Ensure we have an array even if data is null
-    const productList = Array.isArray(products) ? products : [];
+    const productList = products || [];
     
     // Log for debugging
     console.log('Products fetched:', productList);
