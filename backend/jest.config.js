@@ -1,7 +1,7 @@
-/** @type {import('jest').Config} */
-const config = {
+export default {
   testEnvironment: 'node',
   transform: {},
+  extensionsToTreatAsEsm: ['.js'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
   },
@@ -14,5 +14,3 @@ const config = {
     url: 'http://localhost'
   }
 };
-
-export default config;

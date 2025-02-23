@@ -27,7 +27,7 @@ const mockSupabase = {
     }),
     signOut: jest.fn().mockResolvedValue({ error: null })
   },
-  from: jest.fn().mockImplementation(() => ({
+  from: jest.fn().mockReturnValue({
     insert: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     update: jest.fn().mockReturnThis(),
@@ -44,7 +44,7 @@ const mockSupabase = {
       },
       error: null
     })
-  }))
+  })
 };
 
 // Mock database connection
@@ -56,13 +56,13 @@ jest.mock('../database/connection.js', () => ({
 jest.mock('../models/supabase/userModel.js', () => ({
   UserModel: {
     findByEmail: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockImplementation(data => Promise.resolve({
-      id: data.id || 'test-user-id',
-      email: data.email,
-      role: data.role,
-      name: data.name,
+    create: jest.fn().mockResolvedValue({
+      id: 'test-user-id',
+      email: 'test@test.com',
+      role: 'buyer',
+      name: 'Test User',
       created_at: new Date().toISOString()
-    })),
+    }),
     findById: jest.fn().mockResolvedValue(null),
     update: jest.fn().mockResolvedValue(null)
   }
