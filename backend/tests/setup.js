@@ -78,8 +78,8 @@ const createQueryBuilder = (tableName) => {
     // Apply conditions
     if (state.conditions.length > 0) {
       console.log('Applying conditions:', state.conditions);
-      for (const condition of state.conditions) {
-        result = result.filter(item => {
+      result = result.filter(item => {
+        return state.conditions.every(condition => {
           const matches = String(item[condition.field]) === String(condition.value);
           console.log('Checking condition:', { 
             field: condition.field, 
@@ -89,7 +89,7 @@ const createQueryBuilder = (tableName) => {
           });
           return matches;
         });
-      }
+      });
     }
     console.log('After applying conditions:', result);
 
@@ -206,9 +206,7 @@ const mockSupabase = {
   },
   from: (table) => {
     console.log('Creating query builder for table:', table);
-    const builder = createQueryBuilder(table);
-    console.log('Created query builder:', builder);
-    return builder;
+    return createQueryBuilder(table);
   }
 };
 
