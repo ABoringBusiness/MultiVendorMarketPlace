@@ -56,173 +56,6 @@ beforeEach(() => {
   conditions = [];
   updateData = null;
   jest.clearAllMocks();
-  
-  // Reset mock implementations
-  mockSupabase.from.mockImplementation((table) => {
-    if (table === 'products') {
-      return {
-        select: jest.fn().mockReturnThis(),
-        insert: jest.fn().mockImplementation((data) => {
-          const newProduct = {
-            id: 'new-id',
-            ...data,
-            status: 'active',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          products.push(newProduct);
-          return {
-            select: () => ({
-              single: () => Promise.resolve({ data: newProduct, error: null })
-            })
-          };
-        }),
-        update: jest.fn().mockImplementation((data) => {
-          updateData = data;
-          return {
-            eq: (field, value) => {
-              conditions.push({ field, value });
-              return {
-                select: () => ({
-                  single: () => {
-                    let result = [...products];
-                    for (const { field, value } of conditions) {
-                      result = result.filter(item => item[field] === value);
-                    }
-                    if (result.length > 0) {
-                      const index = products.findIndex(p => p.id === result[0].id);
-                      if (index !== -1) {
-                        const updatedItem = {
-                          ...products[index],
-                          ...updateData,
-                          updated_at: new Date().toISOString()
-                        };
-                        products[index] = updatedItem;
-                        return Promise.resolve({ data: updatedItem, error: null });
-                      }
-                    }
-                    return Promise.resolve({ data: null, error: { message: 'Not found' } });
-                  }
-                })
-              };
-            }
-          };
-        }),
-        eq: jest.fn().mockImplementation((field, value) => {
-          conditions.push({ field, value });
-          return {
-            select: () => ({
-              single: () => {
-                let result = [...products];
-                for (const { field, value } of conditions) {
-                  result = result.filter(item => item[field] === value);
-                }
-                if (!conditions.some(c => c.field === 'status')) {
-                  result = result.filter(item => item.status === 'active');
-                }
-                return Promise.resolve({
-                  data: result[0] || null,
-                  error: result.length === 0 ? { message: 'Not found' } : null
-                });
-              }
-            })
-          };
-        }),
-        then: (callback) => {
-          let result = [...products];
-          for (const { field, value } of conditions) {
-            result = result.filter(item => item[field] === value);
-          }
-          if (!conditions.some(c => c.field === 'status')) {
-            result = result.filter(item => item.status === 'active');
-          }
-          return callback({ data: result || [], error: null });
-        }
-      };
-    }
-    return mockSupabase.from(table);
-  });
-  
-  // Reset mock implementations
-  mockSupabase.from.mockImplementation((table) => {
-    if (table === 'products') {
-      return {
-        select: jest.fn().mockReturnThis(),
-        insert: jest.fn().mockImplementation((data) => {
-          const newProduct = {
-            id: 'new-id',
-            ...data,
-            status: 'active',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          products.push(newProduct);
-          return {
-            select: () => ({
-              single: () => Promise.resolve({ data: newProduct, error: null })
-            })
-          };
-        }),
-        update: jest.fn().mockImplementation((data) => {
-          updateData = data;
-          return {
-            eq: (field, value) => {
-              conditions.push({ field, value });
-              return {
-                select: () => ({
-                  single: () => {
-                    let result = [...products];
-                    for (const { field, value } of conditions) {
-                      result = result.filter(item => item[field] === value);
-                    }
-                    if (result.length > 0) {
-                      const index = products.findIndex(p => p.id === result[0].id);
-                      if (index !== -1) {
-                        const updatedItem = {
-                          ...products[index],
-                          ...updateData,
-                          updated_at: new Date().toISOString()
-                        };
-                        products[index] = updatedItem;
-                        return Promise.resolve({ data: updatedItem, error: null });
-                      }
-                    }
-                    return Promise.resolve({ data: null, error: { message: 'Not found' } });
-                  }
-                })
-              };
-            }
-          };
-        }),
-        eq: jest.fn().mockImplementation((field, value) => {
-          conditions.push({ field, value });
-          return {
-            single: () => {
-              let result = [...products];
-              for (const { field, value } of conditions) {
-                result = result.filter(item => item[field] === value);
-              }
-              return Promise.resolve({
-                data: result[0] || null,
-                error: result.length === 0 ? { message: 'Not found' } : null
-              });
-            }
-          };
-        }),
-        then: (callback) => {
-          let result = [...products];
-          for (const { field, value } of conditions) {
-            result = result.filter(item => item[field] === value);
-          }
-          if (!conditions.some(c => c.field === 'status')) {
-            result = result.filter(item => item.status === 'active');
-          }
-          return callback({ data: result || [], error: null });
-        }
-      };
-    }
-    return mockSupabase.from(table);
-  });
 });
 
 // Mock Supabase client
@@ -279,78 +112,42 @@ const mockSupabase = {
           updated_at: new Date().toISOString()
         };
         products.push(newProduct);
-        const chain = {
+        return {
           select: () => ({
             single: () => Promise.resolve({ data: newProduct, error: null })
           })
         };
-        return chain;
-      }),
-      select: jest.fn().mockImplementation((...fields) => {
-        const chain = {
-          eq: (field, value) => {
-            conditions.push({ field, value });
-            return chain;
-          },
-          single: () => {
-            let result = [...products];
-            for (const { field, value } of conditions) {
-              result = result.filter(item => item[field] === value);
-            }
-            if (!conditions.some(c => c.field === 'status')) {
-              result = result.filter(item => item.status === 'active');
-            }
-            return Promise.resolve({ 
-              data: result[0] || null,
-              error: result.length === 0 ? { message: 'Not found' } : null
-            });
-          },
-          then: (callback) => {
-            let result = [...products];
-            for (const { field, value } of conditions) {
-              result = result.filter(item => item[field] === value);
-            }
-            if (!conditions.some(c => c.field === 'status')) {
-              result = result.filter(item => item.status === 'active');
-            }
-            return callback({ data: result || [], error: null });
-          },
-          orderBy: () => chain,
-          limit: () => chain,
-          select: () => chain
-        };
-        return chain;
       }),
       update: jest.fn().mockImplementation((data) => {
         updateData = data;
-        const chain = {
+        return {
           eq: (field, value) => {
             conditions.push({ field, value });
-            return chain;
-          },
-          select: () => ({
-            single: () => {
-              let result = [...products];
-              for (const { field, value } of conditions) {
-                result = result.filter(item => item[field] === value);
-              }
-              if (result.length > 0) {
-                const index = products.findIndex(p => p.id === result[0].id);
-                if (index !== -1) {
-                  const updatedItem = {
-                    ...products[index],
-                    ...updateData,
-                    updated_at: new Date().toISOString()
-                  };
-                  products[index] = updatedItem;
-                  return Promise.resolve({ data: updatedItem, error: null });
+            return {
+              select: () => ({
+                single: () => {
+                  let result = [...products];
+                  for (const { field, value } of conditions) {
+                    result = result.filter(item => item[field] === value);
+                  }
+                  if (result.length > 0) {
+                    const index = products.findIndex(p => p.id === result[0].id);
+                    if (index !== -1) {
+                      const updatedItem = {
+                        ...products[index],
+                        ...updateData,
+                        updated_at: new Date().toISOString()
+                      };
+                      products[index] = updatedItem;
+                      return Promise.resolve({ data: updatedItem, error: null });
+                    }
+                  }
+                  return Promise.resolve({ data: null, error: { message: 'Not found' } });
                 }
-              }
-              return Promise.resolve({ data: null, error: { message: 'Not found' } });
-            }
-          })
+              })
+            };
+          }
         };
-        return chain;
       }),
       eq: jest.fn().mockImplementation((field, value) => {
         conditions.push({ field, value });
@@ -358,31 +155,12 @@ const mockSupabase = {
       }),
       single: jest.fn().mockImplementation(() => {
         let result = [...products];
-        
-        // Apply all conditions
         for (const { field, value } of conditions) {
           result = result.filter(item => item[field] === value);
         }
-
-        // Handle updates
-        if (updateData && result.length > 0) {
-          const index = products.findIndex(p => p.id === result[0].id);
-          if (index !== -1) {
-            const updatedItem = { 
-              ...products[index], 
-              ...updateData,
-              updated_at: new Date().toISOString()
-            };
-            products[index] = updatedItem;
-            return Promise.resolve({ data: updatedItem, error: null });
-          }
-        }
-
-        // For single queries, filter by status='active' by default unless explicitly querying for status
         if (!conditions.some(c => c.field === 'status')) {
           result = result.filter(item => item.status === 'active');
         }
-
         return Promise.resolve({ 
           data: result[0] || null,
           error: result.length === 0 ? { message: 'Not found' } : null
@@ -390,22 +168,14 @@ const mockSupabase = {
       }),
       then: jest.fn().mockImplementation((callback) => {
         let result = [...products];
-        
-        // Apply all conditions
         for (const { field, value } of conditions) {
           result = result.filter(item => item[field] === value);
         }
-
-        // For list queries, filter by status='active' by default unless explicitly querying for status
         if (!conditions.some(c => c.field === 'status')) {
           result = result.filter(item => item.status === 'active');
         }
-
-        // Always return at least an empty array
         return callback({ data: result || [], error: null });
-      }),
-      orderBy: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis()
+      })
     };
 
     return queryBuilder;
@@ -417,11 +187,6 @@ jest.mock('../database/connection.js', () => ({
   default: mockSupabase,
   supabase: mockSupabase
 }));
-
-// Clear mocks before each test
-beforeEach(() => {
-  jest.clearAllMocks();
-});
 
 // Export mock data for tests
 export const testData = {
