@@ -57,10 +57,11 @@ beforeEach(() => {
 // Helper function to filter products based on conditions
 const filterProducts = (items, conditions) => {
   let result = [...items];
+  // Apply all conditions
   for (const { field, value } of conditions) {
     result = result.filter(item => item[field] === value);
   }
-  // If no status filter is explicitly set, only return active products
+  // Only apply status filter if no explicit status condition exists
   if (!conditions.some(c => c.field === 'status')) {
     result = result.filter(item => item.status === 'active');
   }
@@ -69,15 +70,16 @@ const filterProducts = (items, conditions) => {
 
 // Create a query builder that maintains proper chaining
 const createProductQueryBuilder = () => {
-  let conditions = [];
-  let updateData = null;
-  let selectedFields = '*';
-
   const chain = {
+    conditions: [],
+    updateData: null,
+    selectedFields: '*',
+
     select: jest.fn().mockImplementation((...fields) => {
-      selectedFields = fields.length ? fields.join(',') : '*';
+      chain.selectedFields = fields.length ? fields.join(',') : '*';
       return chain;
     }),
+
     insert: jest.fn().mockImplementation((data) => {
       const newProduct = {
         id: 'new-id',
@@ -93,22 +95,25 @@ const createProductQueryBuilder = () => {
         })
       };
     }),
+
     update: jest.fn().mockImplementation((data) => {
-      updateData = data;
+      chain.updateData = data;
       return chain;
     }),
+
     eq: jest.fn().mockImplementation((field, value) => {
-      conditions.push({ field, value });
+      chain.conditions.push({ field, value });
       return chain;
     }),
+
     single: jest.fn().mockImplementation(() => {
-      const result = filterProducts(products, conditions);
-      if (updateData && result.length > 0) {
+      const result = filterProducts(products, chain.conditions);
+      if (chain.updateData && result.length > 0) {
         const index = products.findIndex(p => p.id === result[0].id);
         if (index !== -1) {
           const updatedItem = {
             ...products[index],
-            ...updateData,
+            ...chain.updateData,
             updated_at: new Date().toISOString()
           };
           products[index] = updatedItem;
@@ -120,9 +125,11 @@ const createProductQueryBuilder = () => {
         error: result.length === 0 ? { message: 'Not found' } : null
       });
     }),
+
     then: jest.fn().mockImplementation((callback) => {
-      const result = filterProducts(products, conditions);
-      console.log('Filtered products:', result); // Debug log
+      const result = filterProducts(products, chain.conditions);
+      console.log('Query conditions:', chain.conditions);
+      console.log('Filtered products:', result);
       return callback({ data: result || [], error: null });
     })
   };
