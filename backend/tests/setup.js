@@ -114,14 +114,12 @@ const mockSupabase = {
           })
         };
       }),
+      select: jest.fn().mockImplementation(() => {
+        return queryBuilder;
+      }),
       update: jest.fn().mockImplementation((data) => {
         updateData = data;
-        return {
-          eq: (field, value) => {
-            conditions.push({ field, value });
-            return queryBuilder;
-          }
-        };
+        return queryBuilder;
       }),
       eq: jest.fn().mockImplementation((field, value) => {
         conditions.push({ field, value });
