@@ -10,8 +10,11 @@ import {
 
 const router = express.Router();
 
+// Public routes
 router.get('/list', listProducts);
 router.get('/:id', getProduct);
+
+// Protected routes
 router.post('/create', isAuthenticated, createProduct);
 router.put('/:id/update', isAuthenticated, updateProduct);
 router.post('/:id/disable', isAuthenticated, disableProduct);
