@@ -1,3 +1,4 @@
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import cookieParser from 'cookie-parser';
@@ -10,7 +11,7 @@ import { UserModel } from '../../models/supabase/userModel.js';
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-app.use('/auth', authRouter);
+app.use('/api/v1/auth', authRouter);
 app.use(errorMiddleware);
 
 describe('Authentication API', () => {
