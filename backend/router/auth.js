@@ -4,6 +4,7 @@ import { UserModel } from '../models/supabase/userModel.js';
 import { catchAsyncErrors } from '../middlewares/catchAsyncErrors.js';
 import ErrorHandler from '../middlewares/error.js';
 import { isAuthenticated } from '../middlewares/auth.js';
+import { ROLES, ROLE_MAPPINGS } from '../constants/roles.js';
 
 const router = Router();
 
@@ -21,18 +22,33 @@ router.post('/register', catchAsyncErrors(async (req, res, next) => {
     //   return next(new ErrorHandler("File format not supported.", 400));
     // }
 
-    const user = await UserModel.create(req.body);
-    
-    // Set session cookie
-    const { data: sessionData } = await supabase.auth.setSession({
-      access_token: user.access_token,
-      refresh_token: user.refresh_token
+    // Create Supabase auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: req.body.email,
+      password: req.body.password,
+      options: {
+        data: {
+          role: ROLE_MAPPINGS[req.body.role] || req.body.role
+        }
+      }
     });
+    if (authError) throw authError;
 
+    if (!authData?.user) throw new Error("Failed to create user");
+
+    // Create user in our database
+    const user = await UserModel.create({
+      id: authData.user.id,
+      ...req.body,
+      legacy_role: req.body.role,
+      role: ROLE_MAPPINGS[req.body.role] || req.body.role
+    });
+    
     res.status(201).json({
       success: true,
       message: "User Registered.",
-      user
+      user,
+      token: authData.session?.access_token
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
@@ -48,22 +64,21 @@ router.post('/login', catchAsyncErrors(async (req, res, next) => {
     }
 
     // Sign in with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    const { data: { user, session }, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     if (authError) throw authError;
 
-    // Get user data from our database
-    const user = await UserModel.findById(authData.user.id);
     if (!user) {
-      return next(new ErrorHandler("User not found.", 404));
+      return next(new ErrorHandler("Invalid credentials.", 401));
     }
 
     res.status(200).json({
       success: true,
       message: "Login successfully.",
-      user
+      user,
+      token: session.access_token
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
