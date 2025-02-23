@@ -5,81 +5,53 @@ import { supabase } from '../../database/connection.js';
 import { ROLES } from '../../constants/roles.js';
 
 let server;
+let sellerToken;
+let buyerToken;
+let adminToken;
+let testProduct;
+let testSeller;
 
 describe('Product API', () => {
-  let sellerToken;
-  let buyerToken;
-  let adminToken;
-  let testProduct;
-  let testSeller;
-
   beforeAll(async () => {
     server = app.listen();
-    
-    // Create test users
-    const sellerRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'seller@test.com',
-        password: 'test123',
-        name: 'Test Seller',
-        role: ROLES.SELLER
-      });
-    sellerToken = sellerRes.body.token;
-    testSeller = sellerRes.body.user;
+    try {
+      // Create test seller
+      const { body: sellerData } = await request(app)
+        .post('/auth/register')
+        .send({
+          email: 'seller@test.com',
+          password: 'test123',
+          name: 'Test Seller',
+          role: ROLES.SELLER
+        });
+      sellerToken = sellerData.token;
+      testSeller = sellerData.user;
 
-    const buyerRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'buyer@test.com',
-        password: 'test123',
-        name: 'Test Buyer',
-        role: ROLES.BUYER
-      });
-    buyerToken = buyerRes.body.token;
+      // Create test buyer
+      const { body: buyerData } = await request(app)
+        .post('/auth/register')
+        .send({
+          email: 'buyer@test.com',
+          password: 'test123',
+          name: 'Test Buyer',
+          role: ROLES.BUYER
+        });
+      buyerToken = buyerData.token;
 
-    const adminRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'admin@test.com',
-        password: 'test123',
-        name: 'Test Admin',
-        role: ROLES.ADMIN
-      });
-    adminToken = adminRes.body.token;
-    // Create test seller
-    const sellerRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'seller@test.com',
-        password: 'test123',
-        name: 'Test Seller',
-        role: ROLES.SELLER
-      });
-    sellerToken = sellerRes.body.token;
-    testSeller = sellerRes.body.user;
-
-    // Create test buyer
-    const buyerRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'buyer@test.com',
-        password: 'test123',
-        name: 'Test Buyer',
-        role: ROLES.BUYER
-      });
-    buyerToken = buyerRes.body.token;
-
-    // Create test admin
-    const adminRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'admin@test.com',
-        password: 'test123',
-        name: 'Test Admin',
-        role: ROLES.ADMIN
-      });
-    adminToken = adminRes.body.token;
+      // Create test admin
+      const { body: adminData } = await request(app)
+        .post('/auth/register')
+        .send({
+          email: 'admin@test.com',
+          password: 'test123',
+          name: 'Test Admin',
+          role: ROLES.ADMIN
+        });
+      adminToken = adminData.token;
+    } catch (error) {
+      console.error('Error in beforeAll:', error);
+      throw error;
+    }
   });
 
   beforeEach(async () => {
@@ -88,7 +60,7 @@ describe('Product API', () => {
       await supabase.from('products').delete().neq('id', '0');
       
       // Create test product
-      const productRes = await request(app)
+      const { body: productData } = await request(app)
         .post('/products/create')
         .set('Authorization', `Bearer ${sellerToken}`)
         .send({
@@ -97,7 +69,7 @@ describe('Product API', () => {
           price: 99.99,
           category_id: '123e4567-e89b-12d3-a456-426614174000'
         });
-      testProduct = productRes.body.product;
+      testProduct = productData.product;
     } catch (error) {
       console.error('Error in beforeEach:', error);
       throw error;
@@ -115,16 +87,15 @@ describe('Product API', () => {
           .post('/products/create')
           .set('Authorization', `Bearer ${sellerToken}`)
           .send({
-            title: 'Test Product',
-            description: 'Test Description',
-            price: 99.99,
+            title: 'New Product',
+            description: 'New Description',
+            price: 149.99,
             category_id: '123e4567-e89b-12d3-a456-426614174000'
           });
 
         expect(res.status).toBe(201);
         expect(res.body.success).toBe(true);
-        expect(res.body.product.title).toBe('Test Product');
-        testProduct = res.body.product;
+        expect(res.body.product.title).toBe('New Product');
       });
 
       it('should not create product as buyer', async () => {
@@ -190,7 +161,7 @@ describe('Product API', () => {
 
       it('should not update product as different seller', async () => {
         // Create another seller
-        const otherSellerRes = await request(app)
+        const { body: otherSellerData } = await request(app)
           .post('/auth/register')
           .send({
             email: 'other.seller@test.com',
@@ -201,7 +172,7 @@ describe('Product API', () => {
 
         const res = await request(app)
           .put(`/products/${testProduct.id}/update`)
-          .set('Authorization', `Bearer ${otherSellerRes.body.token}`)
+          .set('Authorization', `Bearer ${otherSellerData.token}`)
           .send({
             title: 'Updated Product',
             price: 149.99
@@ -278,7 +249,7 @@ describe('Product API', () => {
 
       it('should not disable seller as another seller', async () => {
         // Create another seller
-        const otherSellerRes = await request(app)
+        const { body: otherSellerData } = await request(app)
           .post('/auth/register')
           .send({
             email: 'other.seller2@test.com',
@@ -289,7 +260,7 @@ describe('Product API', () => {
 
         const res = await request(app)
           .post(`/sellers/${testSeller.id}/disable`)
-          .set('Authorization', `Bearer ${otherSellerRes.body.token}`);
+          .set('Authorization', `Bearer ${otherSellerData.token}`);
 
         expect(res.status).toBe(403);
         expect(res.body.success).toBe(false);
