@@ -80,7 +80,7 @@ const mockSupabase = {
       },
       error: null
     }),
-    then: jest.fn().mockImplementation(function(callback) {
+    then: jest.fn().mockImplementation((callback) => {
       // Default test data
       const allProducts = [
         {
@@ -109,8 +109,7 @@ const mockSupabase = {
         }
       ];
 
-      // Get the query conditions from the mock calls
-      const mockCalls = this.mock.calls;
+      // Return all products for now - we'll implement filtering in the controller
       let filteredProducts = [...allProducts];
 
       // Apply filters based on the query conditions

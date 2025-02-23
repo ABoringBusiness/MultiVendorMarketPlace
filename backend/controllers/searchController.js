@@ -4,27 +4,11 @@ export const searchProducts = async (req, res) => {
   try {
     const { q, category, min_price, max_price } = req.query;
     
-    // Start with base query
-    let query = supabase
+    // Get all active products
+    const { data: products, error } = await supabase
       .from('products')
       .select('*')
       .eq('status', 'active');
-
-    // Apply category filter
-    if (category) {
-      query = query.eq('category_id', category);
-    }
-
-    // Apply price range filter
-    if (min_price !== undefined && min_price !== '') {
-      query = query.gte('price', parseFloat(min_price));
-    }
-    if (max_price !== undefined && max_price !== '') {
-      query = query.lte('price', parseFloat(max_price));
-    }
-
-    // Execute query and handle response
-    const { data: products, error } = await query;
 
     if (error) {
       console.error('Error searching products:', error);
@@ -38,7 +22,20 @@ export const searchProducts = async (req, res) => {
     // Filter results in memory to ensure all conditions are met
     let filteredProducts = products || [];
 
-    // Apply text search filter in memory for more accurate results
+    // Apply category filter
+    if (category) {
+      filteredProducts = filteredProducts.filter(p => p.category_id === category);
+    }
+
+    // Apply price range filter
+    if (min_price !== undefined && min_price !== '') {
+      filteredProducts = filteredProducts.filter(p => p.price >= parseFloat(min_price));
+    }
+    if (max_price !== undefined && max_price !== '') {
+      filteredProducts = filteredProducts.filter(p => p.price <= parseFloat(max_price));
+    }
+
+    // Apply text search filter
     if (q) {
       const searchLower = q.toLowerCase();
       filteredProducts = filteredProducts.filter(p => 
