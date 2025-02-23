@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 import dotenv from 'dotenv';
+import { ROLES } from '../constants/roles.js';
 
 // Load environment variables
 dotenv.config();
@@ -29,12 +30,12 @@ const testProducts = [
 const testUsers = {
   'mock-seller-token': {
     id: 'seller-id',
-    role: 'seller',
+    role: ROLES.SELLER,
     email: 'seller@test.com'
   },
   'mock-admin-token': {
     id: 'admin-id',
-    role: 'admin',
+    role: ROLES.ADMIN,
     email: 'admin@test.com'
   }
 };
@@ -61,13 +62,46 @@ const mockSupabase = {
       users: testUsers
     };
 
-    return {
+    const queryBuilder = {
       select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockImplementation((data) => {
+        if (table === 'products') {
+          const newProduct = {
+            id: 'new-id',
+            ...data,
+            status: 'active'
+          };
+          return {
+            select: () => ({
+              single: () => Promise.resolve({ data: newProduct, error: null })
+            })
+          };
+        }
+        return queryBuilder;
+      }),
+      update: jest.fn().mockImplementation((data) => {
+        if (table === 'products') {
+          const updatedProduct = {
+            ...testProducts[0],
+            ...data
+          };
+          return {
+            eq: () => ({
+              select: () => ({
+                single: () => Promise.resolve({ data: updatedProduct, error: null })
+              })
+            })
+          };
+        }
+        return queryBuilder;
+      }),
+      eq: jest.fn().mockImplementation((field, value) => {
+        if (table === 'products' && field === 'id') {
+          const product = testProducts.find(p => p.id === value);
+          queryBuilder.single = () => Promise.resolve({ data: product, error: null });
+        }
+        return queryBuilder;
+      }),
       single: jest.fn().mockImplementation(() => {
         if (table === 'products') {
           return Promise.resolve({ data: testProducts[0], error: null });
@@ -81,6 +115,8 @@ const mockSupabase = {
         return callback({ data: [], error: null });
       })
     };
+
+    return queryBuilder;
   })
 };
 
