@@ -69,6 +69,24 @@ const mockUserModel = {
 jest.mock('../models/supabase/userModel.js', () => ({
   UserModel: mockUserModel
 }));
+
+// Mock Stripe
+const mockStripe = {
+  paymentIntents: {
+    create: jest.fn().mockResolvedValue({
+      id: 'pi_test',
+      client_secret: 'test_secret'
+    })
+  },
+  webhooks: {
+    constructEvent: jest.fn().mockReturnValue({
+      type: 'payment_intent.succeeded',
+      data: { object: { metadata: { order_id: 'test_order' } } }
+    })
+  }
+};
+
+jest.mock('stripe', () => jest.fn(() => mockStripe));
       email: data.email,
       role: data.role,
       name: data.name,
