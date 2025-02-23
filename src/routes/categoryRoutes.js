@@ -1,21 +1,21 @@
-'use strict';
-const express = require('express');
+const express = require("express");
+const {
+    createCategory,
+    getAllCategories,
+    getCategoryById,
+    updateCategory,
+    deleteCategory,
+} = require("../controllers/categoryController");
+const authMiddleware = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
+
 const router = express.Router();
-const categoryController = require('../controllers/categoryController');
-const authMiddleware = require('../middlewares/auth'); // if you wish to protect these routes
 
 /**
  * @swagger
- * tags:
- *   name: Category
- *   description: Endpoints for managing product categories
- */
-
-/**
- * @swagger
- * /api/categories:
+ * /categories:
  *   post:
- *     summary: Create a new category
+ *     summary: Create a new category (Admin only)
  *     tags: [Category]
  *     security:
  *       - bearerAuth: []
@@ -30,54 +30,100 @@ const authMiddleware = require('../middlewares/auth'); // if you wish to protect
  *             properties:
  *               name:
  *                 type: string
- *                 example: Electronics
+ *                 example: "Electronics"
  *               description:
  *                 type: string
- *                 example: Devices and gadgets.
+ *                 example: "All electronic products"
  *     responses:
  *       201:
- *         description: Category created successfully.
+ *         description: Category created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "12345"
+ *                 name:
+ *                   type: string
+ *                   example: "Electronics"
+ *                 description:
+ *                   type: string
+ *                   example: "All electronic products"
+ *       400:
+ *         description: Invalid request data
  */
-router.post('/', authMiddleware, categoryController.createCategory);
+router.post("/", authMiddleware, adminMiddleware, createCategory);
 
 /**
  * @swagger
- * /api/categories:
+ * /categories:
  *   get:
- *     summary: Retrieve all categories
+ *     summary: Get all categories
  *     tags: [Category]
  *     responses:
  *       200:
- *         description: A list of categories.
+ *         description: List of all categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     example: "12345"
+ *                   name:
+ *                     type: string
+ *                     example: "Electronics"
+ *                   description:
+ *                     type: string
+ *                     example: "All electronic products"
  */
-router.get('/', categoryController.getCategories);
+router.get("/", getAllCategories);
 
 /**
  * @swagger
- * /api/categories/{id}:
+ * /categories/{id}:
  *   get:
- *     summary: Retrieve a category by ID
+ *     summary: Get a single category by ID
  *     tags: [Category]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: The category ID.
+ *           type: string
+ *         example: "12345"
  *     responses:
  *       200:
- *         description: Category details.
+ *         description: Category retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "12345"
+ *                 name:
+ *                   type: string
+ *                   example: "Electronics"
+ *                 description:
+ *                   type: string
+ *                   example: "All electronic products"
  *       404:
- *         description: Category not found.
+ *         description: Category not found
  */
-router.get('/:id', categoryController.getCategoryById);
+router.get("/:id", getCategoryById);
 
 /**
  * @swagger
- * /api/categories/{id}:
+ * /categories/{id}:
  *   put:
- *     summary: Update an existing category
+ *     summary: Update a category (Admin only)
  *     tags: [Category]
  *     security:
  *       - bearerAuth: []
@@ -86,8 +132,8 @@ router.get('/:id', categoryController.getCategoryById);
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: The category ID.
+ *           type: string
+ *         example: "12345"
  *     requestBody:
  *       required: true
  *       content:
@@ -97,21 +143,39 @@ router.get('/:id', categoryController.getCategoryById);
  *             properties:
  *               name:
  *                 type: string
+ *                 example: "Updated Electronics"
  *               description:
  *                 type: string
+ *                 example: "Updated description"
  *     responses:
  *       200:
- *         description: Category updated successfully.
+ *         description: Category updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "12345"
+ *                 name:
+ *                   type: string
+ *                   example: "Updated Electronics"
+ *                 description:
+ *                   type: string
+ *                   example: "Updated description"
  *       404:
- *         description: Category not found.
+ *         description: Category not found
+ *       400:
+ *         description: Invalid request data
  */
-router.put('/:id', authMiddleware, categoryController.updateCategory);
+router.put("/:id", authMiddleware, adminMiddleware, updateCategory);
 
 /**
  * @swagger
- * /api/categories/{id}:
+ * /categories/{id}:
  *   delete:
- *     summary: Delete a category
+ *     summary: Delete a category (Admin only)
  *     tags: [Category]
  *     security:
  *       - bearerAuth: []
@@ -120,14 +184,14 @@ router.put('/:id', authMiddleware, categoryController.updateCategory);
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: The category ID.
+ *           type: string
+ *         example: "12345"
  *     responses:
  *       200:
- *         description: Category deleted successfully.
+ *         description: Category deleted successfully
  *       404:
- *         description: Category not found.
+ *         description: Category not found
  */
-router.delete('/:id', authMiddleware, categoryController.deleteCategory);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteCategory);
 
 module.exports = router;

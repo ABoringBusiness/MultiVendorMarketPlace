@@ -1,93 +1,98 @@
-'use strict';
+const { Product } = require("../models");
 
-const { Product } = require('../../models');
-
-/**
- * Create a new product.
- * (Assumes the vendor’s ID is attached to req.user from authentication middleware)
- */
+// @desc Create a new product
+// @route POST /api/products
 exports.createProduct = async (req, res) => {
   try {
-    const { name, description, price, inventory_quantity, category, image_url } = req.body;
-    const vendor_id = req.user.id; // Ensure req.user is set (e.g., via an auth middleware)
+    if (req.user.role !== "seller") {
+      return res.status(403).json({ message: "Only sellers can create products" });
+    }
 
+    const { title, description, price, imageUrl } = req.body;
     const product = await Product.create({
-      vendor_id,
-      name,
+      sellerId: req.user.id,
+      title,
       description,
       price,
-      inventory_quantity,
-      category,
-      image_url,
+      imageUrl,
     });
 
-    res.status(201).json({ product });
+    res.status(201).json({ message: "Product created successfully", product });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-/**
- * Get a list of all products.
- */
-exports.getProducts = async (req, res) => {
+// @desc Get all products
+// @route GET /api/products
+exports.getAllProducts = async (req, res) => {
   try {
-    const products = await Product.findAll();
-    res.json({ products });
+    const products = await Product.findAll({ where: { isDisabled: false } });
+    res.json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-/**
- * Get a product by its ID.
- */
+// @desc Get a single product by ID
+// @route GET /api/products/:id
 exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Product not found.' });
-    res.json({ product });
+    if (!product || product.isDisabled) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-/**
- * Update an existing product.
- */
+// @desc Update a product (only seller can update)
+// @route PUT /api/products/:id
 exports.updateProduct = async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Product not found.' });
 
-    // Optional: Check if the current user (req.user) is allowed to update this product.
-    const { name, description, price, inventory_quantity, category, image_url } = req.body;
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
 
-    product.name = name || product.name;
+    if (product.sellerId !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized to update this product" });
+    }
+
+    const { title, description, price, imageUrl } = req.body;
+    product.title = title || product.title;
     product.description = description || product.description;
     product.price = price || product.price;
-    product.inventory_quantity = inventory_quantity !== undefined ? inventory_quantity : product.inventory_quantity;
-    product.category = category || product.category;
-    product.image_url = image_url || product.image_url;
+    product.imageUrl = imageUrl || product.imageUrl;
 
     await product.save();
-    res.json({ product });
+
+    res.json({ message: "Product updated successfully", product });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-/**
- * Delete a product.
- */
+// @desc Delete a product (only seller can delete)
+// @route DELETE /api/products/:id
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Product not found.' });
-    
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    if (product.sellerId !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized to delete this product" });
+    }
+
     await product.destroy();
-    res.json({ message: 'Product deleted successfully.' });
+    res.json({ message: "Product deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };

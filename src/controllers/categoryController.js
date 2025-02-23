@@ -1,75 +1,80 @@
-'use strict';
+const { Category } = require("../models");
 
-const { Category } = require('../../models');
-
-/**
- * Create a new category.
- */
+// @desc Create a new category
+// @route POST /api/categories
 exports.createCategory = async (req, res) => {
   try {
     const { name, description } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: "Category name is required" });
+    }
+
     const category = await Category.create({ name, description });
-    res.status(201).json({ category });
+    res.status(201).json({ message: "Category created successfully", category });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-/**
- * Get a list of all categories.
- */
-exports.getCategories = async (req, res) => {
+// @desc Get all categories
+// @route GET /api/categories
+exports.getAllCategories = async (req, res) => {
   try {
     const categories = await Category.findAll();
-    res.json({ categories });
+    res.json(categories);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-/**
- * Get a single category by its ID.
- */
+// @desc Get a single category by ID
+// @route GET /api/categories/:id
 exports.getCategoryById = async (req, res) => {
   try {
     const category = await Category.findByPk(req.params.id);
-    if (!category) return res.status(404).json({ message: 'Category not found.' });
-    res.json({ category });
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    res.json(category);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-/**
- * Update an existing category.
- */
+// @desc Update a category
+// @route PUT /api/categories/:id
 exports.updateCategory = async (req, res) => {
   try {
-    const category = await Category.findByPk(req.params.id);
-    if (!category) return res.status(404).json({ message: 'Category not found.' });
-    
     const { name, description } = req.body;
+    const category = await Category.findByPk(req.params.id);
+
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
     category.name = name || category.name;
     category.description = description || category.description;
     await category.save();
-    
-    res.json({ category });
+
+    res.json({ message: "Category updated successfully", category });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-/**
- * Delete a category.
- */
+// @desc Delete a category
+// @route DELETE /api/categories/:id
 exports.deleteCategory = async (req, res) => {
   try {
     const category = await Category.findByPk(req.params.id);
-    if (!category) return res.status(404).json({ message: 'Category not found.' });
-    
+
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
     await category.destroy();
-    res.json({ message: 'Category deleted successfully.' });
+    res.json({ message: "Category deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error });
   }
 };

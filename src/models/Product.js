@@ -1,57 +1,48 @@
-'use strict';
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
+const User = require("./User");
 
-module.exports = (sequelize, DataTypes) => {
-  const Product = sequelize.define(
-    'Product',
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-        allowNull: false,
-      },
-      vendor_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      price: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-      },
-      inventory_quantity: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      category: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      image_url: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
+const Product = sequelize.define("Product", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  sellerId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
     },
-    {
-      tableName: 'products',
-      schema: 'marketplace',
-      underscored: true, // automatically maps createdAt/updatedAt to created_at/updated_at
-      timestamps: true,
-    }
-  );
+    onDelete: "CASCADE",
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  price: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  imageUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  isDisabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+}, {
+  timestamps: true,
+});
 
-  Product.associate = function (models) {
-    // Associate with the vendor (assuming vendors are stored in the "users" table)
-    Product.belongsTo(models.User, { foreignKey: 'vendor_id', as: 'vendor' });
-  };
+// Define association
+User.hasMany(Product, { foreignKey: "sellerId", onDelete: "CASCADE" });
+Product.belongsTo(User, { foreignKey: "sellerId" });
 
-  return Product;
-};
+module.exports = Product;

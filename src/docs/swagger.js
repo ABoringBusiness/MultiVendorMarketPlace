@@ -15,7 +15,7 @@ const options = {
     ],
     components: {
       securitySchemes: {
-        BearerAuth: {
+        bearerAuth: {
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
@@ -24,7 +24,21 @@ const options = {
     },
     security: [
       {
-        BearerAuth: [],
+        bearerAuth: [],
+      },
+    ],
+    tags: [
+      {
+        name: "Authentication",
+        description: "Endpoints related to authentication",
+      },
+      {
+        name: "Seller",
+        description: "Endpoints related to sellers",
+      },
+      {
+        name: "Category",
+        description: "Endpoints related to product categories",
       },
     ],
   },

@@ -1,7 +1,9 @@
 const sequelize = require("../config/database");
 const User = require("./User");
+const Product = require("./Product");
+const Category = require("./Category");
 
-const db = { sequelize, User };
+const db = { sequelize, User, Product, Category};
 
 // Sync models with database
 db.sequelize.sync({ alter: true })
