@@ -14,9 +14,13 @@ export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     
     // Verify token with Supabase
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authUser) {
-      return next(new ErrorHandler("Invalid or expired token.", 401));
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      // Try verifying with provided token
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !authUser) {
+        return next(new ErrorHandler("Invalid or expired token.", 401));
+      }
     }
 
     // Get user data from our users table
