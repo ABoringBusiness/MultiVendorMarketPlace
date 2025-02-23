@@ -111,8 +111,13 @@ const createProductQueryBuilder = () => {
     }),
     then: jest.fn().mockImplementation((callback) => {
       let result = [...products];
+      // Apply all conditions
       for (const { field, value } of conditions) {
         result = result.filter(item => item[field] === value);
+      }
+      // If no status filter is explicitly set, only return active products
+      if (!conditions.some(c => c.field === 'status')) {
+        result = result.filter(item => item.status === 'active');
       }
       return callback({ data: result || [], error: null });
     })
