@@ -18,6 +18,19 @@ describe('Authentication API', () => {
   beforeEach(() => {
     // Reset mock implementations
     jest.clearAllMocks();
+    
+    // Get UserModel mock
+    const { UserModel } = jest.requireMock('../../models/supabase/userModel.js');
+    
+    // Setup default mock responses
+    UserModel.findByEmail.mockResolvedValue(null);
+    UserModel.create.mockImplementation(data => Promise.resolve({
+      id: 'test-user-id',
+      email: data.email,
+      role: data.role,
+      name: data.name,
+      created_at: new Date().toISOString()
+    }));
   });
 
   describe('POST /auth/register', () => {
