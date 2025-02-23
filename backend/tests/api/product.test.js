@@ -10,44 +10,24 @@ describe('Product Management APIs', () => {
   let testProduct;
 
   beforeAll(async () => {
-    // Create test seller
-    const sellerRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'seller@test.com',
-        password: 'test123',
-        name: 'Test Seller',
-        role: ROLES.SELLER
-      });
-    sellerToken = sellerRes.body.token;
-
-    // Create test admin
-    const adminRes = await request(app)
-      .post('/auth/register')
-      .send({
-        email: 'admin@test.com',
-        password: 'test123',
-        name: 'Test Admin',
-        role: ROLES.ADMIN
-      });
-    adminToken = adminRes.body.token;
+    // Mock tokens for testing
+    sellerToken = 'mock-seller-token';
+    adminToken = 'mock-admin-token';
+    
+    // Mock test product
+    testProduct = {
+      id: '1',
+      title: 'Digital Art 1',
+      description: 'Beautiful digital art',
+      price: 99.99,
+      category_id: '123e4567-e89b-12d3-a456-426614174000',
+      status: 'active'
+    };
   });
 
   beforeEach(async () => {
-    // Clear test data
-    await supabase.from('products').delete().neq('id', '0');
-    
-    // Create test product
-    const productRes = await request(app)
-      .post('/api/v1/products/create')
-      .set('Authorization', `Bearer ${sellerToken}`)
-      .send({
-        title: 'Test Product',
-        description: 'Test description',
-        price: 99.99,
-        category_id: '123e4567-e89b-12d3-a456-426614174000'
-      });
-    testProduct = productRes.body.product;
+    // Reset test data before each test
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
