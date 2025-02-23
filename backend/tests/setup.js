@@ -62,10 +62,6 @@ const filterProducts = (items, conditions) => {
   for (const { field, value } of conditions) {
     result = result.filter(item => item[field] === value);
   }
-  // Only apply status filter if no explicit status condition exists
-  if (!conditions.some(c => c.field === 'status')) {
-    result = result.filter(item => item.status === 'active');
-  }
   return result;
 };
 
@@ -140,12 +136,11 @@ const createProductQueryBuilder = () => {
     then: jest.fn().mockImplementation((callback) => {
       chain.debug(); // Log chain state
       const result = filterProducts(products, chain.conditions);
+      console.log('Query conditions:', chain.conditions);
       console.log('Filtered products:', result);
       // Create a new chain for the next query
       const response = callback({ data: result || [], error: null });
-      chain.conditions = [];
-      chain.updateData = null;
-      chain.selectedFields = '*';
+      // Don't reset chain state here since it's needed for chaining
       return response;
     })
   };
