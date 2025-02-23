@@ -1,14 +1,18 @@
 import { jest, describe, it, expect, beforeAll, beforeEach } from '@jest/globals';
+import { jest, describe, it, expect, beforeAll, beforeEach, afterAll } from '@jest/globals';
 import request from 'supertest';
 import { app } from '../../app.js';
 import { supabase } from '../../database/connection.js';
 import { ROLES } from '../../constants/roles.js';
+
+let server;
 
 describe('Search API', () => {
   let sellerToken;
   let testProducts;
 
   beforeAll(async () => {
+    server = app.listen();
     // Create test seller
     const sellerRes = await request(app)
       .post('/auth/register')
@@ -52,7 +56,12 @@ describe('Search API', () => {
   });
 
   beforeEach(async () => {
-    // No cleanup needed for search tests
+    // Clear test data
+    await supabase.from('products').delete().neq('id', '0');
+  });
+
+  afterAll(async () => {
+    await server.close();
   });
 
   describe('Search & Filtering', () => {
