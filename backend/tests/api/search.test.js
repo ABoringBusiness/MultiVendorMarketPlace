@@ -67,7 +67,7 @@ describe('Search API', () => {
     describe('GET /search', () => {
       it('should search products by keyword', async () => {
         const res = await request(app)
-          .get('/search?q=digital');
+          .get('/api/v1/search?q=digital');
 
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
@@ -77,7 +77,7 @@ describe('Search API', () => {
 
       it('should filter products by category', async () => {
         const res = await request(app)
-          .get('/search?category=123e4567-e89b-12d3-a456-426614174000');
+          .get('/api/v1/search?category=123e4567-e89b-12d3-a456-426614174000');
 
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
@@ -87,7 +87,7 @@ describe('Search API', () => {
 
       it('should filter products by price range', async () => {
         const res = await request(app)
-          .get('/search?min_price=100&max_price=200');
+          .get('/api/v1/search?min_price=100&max_price=200');
 
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
@@ -97,7 +97,7 @@ describe('Search API', () => {
 
       it('should combine search and filters', async () => {
         const res = await request(app)
-          .get('/search?q=art&min_price=200');
+          .get('/api/v1/search?q=art&min_price=200');
 
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
