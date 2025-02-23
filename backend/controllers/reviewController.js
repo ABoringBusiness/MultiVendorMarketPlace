@@ -91,30 +91,35 @@ export const createReview = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("You have already reviewed this seller.", 400));
     }
 
-    // Create the review
-    const { data: review, error } = await supabase
-      .from('reviews')
-      .insert([{
-        seller_id: sellerId,
-        reviewer_id: req.user.id,
-        rating: ratingNum,
-        comment,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
+    try {
+      // Create the review
+      const { data: review, error: insertError } = await supabase
+        .from('reviews')
+        .insert({
+          seller_id: sellerId,
+          reviewer_id: req.user.id,
+          rating: ratingNum,
+          comment,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error creating review:', error);
+      if (insertError) {
+        console.error('Error creating review:', insertError);
+        return next(new ErrorHandler("Failed to create review", 500));
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Review added successfully.",
+        review
+      });
+    } catch (error) {
+      console.error('Error in review creation:', error);
       return next(new ErrorHandler("Failed to create review", 500));
     }
-
-    res.status(201).json({
-      success: true,
-      message: "Review added successfully.",
-      review
-    });
   } catch (error) {
     return next(new ErrorHandler(error.message || "Failed to create review", 500));
   }
