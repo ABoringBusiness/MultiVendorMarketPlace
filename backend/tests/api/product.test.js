@@ -21,6 +21,7 @@ describe('Product Management APIs', () => {
       description: 'Beautiful digital art',
       price: 99.99,
       category_id: '123e4567-e89b-12d3-a456-426614174000',
+      seller_id: 'seller-id',
       status: 'active'
     };
   });
@@ -28,10 +29,6 @@ describe('Product Management APIs', () => {
   beforeEach(async () => {
     // Reset test data before each test
     jest.clearAllMocks();
-  });
-
-  afterAll(async () => {
-    await supabase.from('products').delete().neq('id', '0');
   });
 
   describe('GET /products/list', () => {
