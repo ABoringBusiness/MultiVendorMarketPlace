@@ -2,7 +2,6 @@
 const config = {
   testEnvironment: 'node',
   transform: {},
-  extensionsToTreatAsEsm: ['.js'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
   },
@@ -10,7 +9,10 @@ const config = {
   testMatch: ['**/tests/api/*.test.js'],
   verbose: true,
   testTimeout: 10000,
-  moduleDirectories: ['node_modules', '<rootDir>']
+  moduleDirectories: ['node_modules', '<rootDir>'],
+  testEnvironmentOptions: {
+    url: 'http://localhost'
+  }
 };
 
 export default config;
