@@ -68,7 +68,7 @@ const filterProducts = (items, conditions) => {
   // Apply all conditions
   for (const condition of conditions) {
     result = result.filter(item => {
-      const matches = item[condition.field] === condition.value;
+      const matches = String(item[condition.field]) === String(condition.value);
       console.log('Checking condition:', { 
         field: condition.field,
         itemValue: item[condition.field],
@@ -147,7 +147,7 @@ const createQueryBuilder = (tableName) => {
     insert: (data) => {
       console.log('Inserting data:', data);
       const newItem = {
-        id: 'new-id',
+        id: String(products.length + 1),
         ...data,
         status: data.status || 'active',
         created_at: new Date().toISOString(),
