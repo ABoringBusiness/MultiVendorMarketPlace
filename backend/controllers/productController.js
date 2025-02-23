@@ -38,6 +38,7 @@ export const getProduct = async (req, res) => {
       .from('products')
       .select('*')
       .eq('id', id)
+      .eq('status', 'active')
       .single();
 
     if (error || !product) {
@@ -117,6 +118,7 @@ export const updateProduct = async (req, res) => {
       .from('products')
       .select('*')
       .eq('id', id)
+      .eq('status', 'active')
       .single();
 
     if (fetchError || !product) {
@@ -182,6 +184,7 @@ export const disableProduct = async (req, res) => {
       .from('products')
       .select('*')
       .eq('id', id)
+      .eq('status', 'active')
       .single();
 
     if (fetchError || !product) {
