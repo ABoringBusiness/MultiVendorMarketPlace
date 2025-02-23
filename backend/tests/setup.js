@@ -167,3 +167,9 @@ jest.mock('../database/connection.js', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
 });
+
+// Export mock data for tests
+export const testData = {
+  products: initialProducts,
+  users: mockUsers
+};
