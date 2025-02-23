@@ -131,14 +131,10 @@ router.post('/login', catchAsyncErrors(async (req, res, next) => {
         password
       });
 
-      if (authError) {
-        if (authError.message.includes('Email not confirmed')) {
+      if (authError || !user) {
+        if (authError?.message.includes('Email not confirmed')) {
           return next(new ErrorHandler("Please confirm your email before logging in.", 401));
         }
-        throw authError;
-      }
-
-      if (!user) {
         return next(new ErrorHandler("Invalid credentials.", 401));
       }
 
