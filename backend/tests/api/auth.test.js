@@ -15,16 +15,21 @@ app.use('/api/v1/auth', authRouter);
 app.use(errorMiddleware);
 
 describe('Authentication API', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     // Reset mock implementations
-    const { UserModel } = await import('../../models/supabase/userModel.js');
-    
-    // Setup default mock responses
-    UserModel.findByEmail.mockResolvedValue(null);
-    UserModel.create.mockImplementation((data) => Promise.resolve({
+    jest.resetAllMocks();
+  });
+
+  beforeAll(() => {
+    // Setup default mock responses for UserModel
+    const mockUser = {
       id: 'test-user-id',
-      ...data
-    }));
+      email: 'test@example.com',
+      role: ROLES.BUYER
+    };
+
+    UserModel.findByEmail.mockImplementation(() => Promise.resolve(null));
+    UserModel.create.mockImplementation((data) => Promise.resolve({ ...mockUser, ...data }));
   });
 
   describe('POST /auth/register', () => {

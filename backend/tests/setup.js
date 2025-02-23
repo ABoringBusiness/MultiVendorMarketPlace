@@ -5,15 +5,14 @@ import { config } from 'dotenv';
 config();
 
 // Mock UserModel
-const mockUserModel = {
-  findByEmail: jest.fn(),
-  create: jest.fn(),
-  findById: jest.fn(),
-  update: jest.fn()
-};
-
+// Mock UserModel
 jest.mock('../models/supabase/userModel.js', () => ({
-  UserModel: mockUserModel
+  UserModel: {
+    findByEmail: jest.fn(),
+    create: jest.fn(),
+    findById: jest.fn(),
+    update: jest.fn()
+  }
 }));
 
 // Mock UserModel
