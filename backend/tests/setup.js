@@ -46,7 +46,7 @@ const mockSupabase = {
   from: jest.fn().mockImplementation((table) => {
     let queryData = table === 'products' ? [...testProducts] : [];
     let conditions = [];
-    let updateData = {};
+    let updateData = null;
 
     const queryBuilder = {
       select: jest.fn().mockReturnThis(),
@@ -57,7 +57,6 @@ const mockSupabase = {
           status: 'active',
           seller_id: 'seller-id'
         };
-        queryData = [newProduct];
         return {
           select: () => ({
             single: () => Promise.resolve({ data: newProduct, error: null })
@@ -77,11 +76,9 @@ const mockSupabase = {
           conditions.every(({ field, value }) => item[field] === value)
         );
 
-        if (Object.keys(updateData).length > 0) {
-          if (filtered.length > 0) {
-            const updatedItem = { ...filtered[0], ...updateData };
-            return Promise.resolve({ data: updatedItem, error: null });
-          }
+        if (updateData && filtered.length > 0) {
+          const updatedItem = { ...filtered[0], ...updateData };
+          return Promise.resolve({ data: updatedItem, error: null });
         }
 
         return Promise.resolve({ 
