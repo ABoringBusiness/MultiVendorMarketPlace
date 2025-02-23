@@ -43,13 +43,15 @@ const mockUsers = {
 
 // Mock database state
 let products = [];
+let conditions = [];
+let updateData = null;
 
 // Reset database before each test
 beforeEach(() => {
   products = [...initialProducts];
+  conditions = [];
+  updateData = null;
   jest.clearAllMocks();
-  conditions = []; // Reset conditions
-  updateData = null; // Reset update data
 });
 
 // Mock Supabase client
@@ -83,10 +85,6 @@ const mockSupabase = {
         }))
       };
     }
-
-    // Shared state for query conditions and updates
-    let conditions = [];
-    let updateData = null;
 
     if (table !== 'products') {
       return {
