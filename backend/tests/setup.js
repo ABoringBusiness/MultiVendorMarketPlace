@@ -57,33 +57,32 @@ const mockSupabase = {
           ...data,
           status: 'active'
         };
-        queryData.push(insertData);
-        return queryBuilder;
+        return {
+          select: () => ({
+            single: () => Promise.resolve({ data: insertData, error: null })
+          })
+        };
       }),
       update: jest.fn().mockImplementation((data) => {
         updateData = data;
         return queryBuilder;
       }),
       eq: jest.fn().mockImplementation((field, value) => {
-        conditions.push({ field, value, op: 'eq' });
+        conditions.push({ field, value });
         return queryBuilder;
       }),
       single: jest.fn().mockImplementation(() => {
         let result = queryData;
         
         // Apply all conditions
-        conditions.forEach(({ field, value }) => {
+        for (const { field, value } of conditions) {
           result = result.filter(item => item[field] === value);
-        });
+        }
 
         // Handle updates
         if (updateData && result.length > 0) {
           const updatedItem = { ...result[0], ...updateData };
-          const index = queryData.findIndex(item => item.id === result[0].id);
-          if (index !== -1) {
-            queryData[index] = updatedItem;
-            return Promise.resolve({ data: updatedItem, error: null });
-          }
+          return Promise.resolve({ data: updatedItem, error: null });
         }
 
         // Handle inserts
@@ -100,9 +99,9 @@ const mockSupabase = {
         let result = queryData;
         
         // Apply all conditions
-        conditions.forEach(({ field, value }) => {
+        for (const { field, value } of conditions) {
           result = result.filter(item => item[field] === value);
-        });
+        }
 
         return callback({ data: result, error: null });
       })
