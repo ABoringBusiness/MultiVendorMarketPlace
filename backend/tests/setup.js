@@ -80,34 +80,63 @@ const mockSupabase = {
       },
       error: null
     }),
-    then: jest.fn().mockImplementation((callback) => {
+    then: jest.fn().mockImplementation(function(callback) {
+      // Default test data
+      const allProducts = [
+        {
+          id: '1',
+          title: 'Digital Art 1',
+          description: 'Beautiful digital art',
+          price: 99.99,
+          category_id: '123e4567-e89b-12d3-a456-426614174000',
+          status: 'active'
+        },
+        {
+          id: '2',
+          title: 'Photography Print',
+          description: 'High quality photo print',
+          price: 149.99,
+          category_id: '223e4567-e89b-12d3-a456-426614174000',
+          status: 'active'
+        },
+        {
+          id: '3',
+          title: 'Abstract Painting',
+          description: 'Modern abstract art',
+          price: 299.99,
+          category_id: '123e4567-e89b-12d3-a456-426614174000',
+          status: 'active'
+        }
+      ];
+
+      // Get the query conditions from the mock calls
+      const mockCalls = this.mock.calls;
+      let filteredProducts = [...allProducts];
+
+      // Apply filters based on the query conditions
+      for (const call of mockCalls) {
+        const [method, ...args] = call;
+        
+        if (method === 'eq' && args[0] === 'category_id') {
+          filteredProducts = filteredProducts.filter(p => p.category_id === args[1]);
+        }
+        else if (method === 'gte' && args[0] === 'price') {
+          filteredProducts = filteredProducts.filter(p => p.price >= parseFloat(args[1]));
+        }
+        else if (method === 'lte' && args[0] === 'price') {
+          filteredProducts = filteredProducts.filter(p => p.price <= parseFloat(args[1]));
+        }
+        else if (method === 'or' && args[0].includes('title.ilike')) {
+          const searchTerm = args[0].split('.')[2].replace(/%/g, '').toLowerCase();
+          filteredProducts = filteredProducts.filter(p => 
+            p.title.toLowerCase().includes(searchTerm) || 
+            p.description.toLowerCase().includes(searchTerm)
+          );
+        }
+      }
+
       return Promise.resolve(callback({
-        data: [
-          {
-            id: '1',
-            title: 'Digital Art 1',
-            description: 'Beautiful digital art',
-            price: 99.99,
-            category_id: '123e4567-e89b-12d3-a456-426614174000',
-            status: 'active'
-          },
-          {
-            id: '2',
-            title: 'Photography Print',
-            description: 'High quality photo print',
-            price: 149.99,
-            category_id: '223e4567-e89b-12d3-a456-426614174000',
-            status: 'active'
-          },
-          {
-            id: '3',
-            title: 'Abstract Painting',
-            description: 'Modern abstract art',
-            price: 299.99,
-            category_id: '123e4567-e89b-12d3-a456-426614174000',
-            status: 'active'
-          }
-        ],
+        data: filteredProducts,
         error: null
       }));
     })
