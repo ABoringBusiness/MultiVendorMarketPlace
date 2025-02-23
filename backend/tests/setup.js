@@ -167,7 +167,7 @@ const createQueryBuilder = (tableName) => {
     },
     eq: (field, value) => {
       console.log('Adding condition:', { field, value });
-      state.conditions.push({ field, value });
+      state.conditions.push({ field, value: String(value) });
       console.log('Current conditions:', state.conditions);
       return chain;
     },
