@@ -102,7 +102,9 @@ const mockSupabase = {
         const newProduct = {
           id: 'new-id',
           ...data,
-          status: 'active'
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
         products.push(newProduct);
         return {
@@ -131,7 +133,11 @@ const mockSupabase = {
         if (updateData && result.length > 0) {
           const index = products.findIndex(p => p.id === result[0].id);
           if (index !== -1) {
-            const updatedItem = { ...products[index], ...updateData };
+            const updatedItem = { 
+              ...products[index], 
+              ...updateData,
+              updated_at: new Date().toISOString()
+            };
             products[index] = updatedItem;
             return Promise.resolve({ data: updatedItem, error: null });
           }
@@ -150,9 +156,16 @@ const mockSupabase = {
           result = result.filter(item => item[field] === value);
         }
 
+        // Filter out disabled products by default for list operations
+        if (!conditions.some(c => c.field === 'status')) {
+          result = result.filter(item => item.status === 'active');
+        }
+
         // Always return at least an empty array
         return callback({ data: result || [], error: null });
-      })
+      }),
+      orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis()
     };
 
     return queryBuilder;
