@@ -4,18 +4,45 @@ import { config } from 'dotenv';
 // Load environment variables
 config();
 
+// Mock Supabase client
+jest.mock('../database/connection.js', () => ({
+  supabase: {
+    auth: {
+      signUp: jest.fn().mockResolvedValue({
+        data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
+        error: null
+      }),
+      signInWithPassword: jest.fn().mockResolvedValue({
+        data: { user: { id: 'test-user-id' }, session: { access_token: 'test-token' } },
+        error: null
+      }),
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: 'test-user-id' } },
+        error: null
+      }),
+      signOut: jest.fn().mockResolvedValue({ error: null })
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null })
+    }))
+  }
+}));
+
 // Mock UserModel
 jest.mock('../models/supabase/userModel.js', () => ({
   UserModel: {
-    findByEmail: jest.fn().mockImplementation(() => Promise.resolve(null)),
+    findByEmail: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockImplementation((data) => Promise.resolve({ id: 'test-user-id', ...data })),
-    findById: jest.fn().mockImplementation(() => Promise.resolve(null)),
-    update: jest.fn().mockImplementation(() => Promise.resolve(null))
+    findById: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue(null)
   }
 }));
-  UserModel: {
-    findByEmail: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockImplementation((data) => Promise.resolve({
       id: 'test-user-id',
       ...data
     })),
