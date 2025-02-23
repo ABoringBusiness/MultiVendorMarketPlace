@@ -19,7 +19,7 @@ export const searchProducts = async (req, res) => {
       });
     }
 
-    // Filter results in memory to ensure all conditions are met
+    // Filter results in memory
     let filteredProducts = products || [];
 
     // Apply category filter
@@ -29,10 +29,12 @@ export const searchProducts = async (req, res) => {
 
     // Apply price range filter
     if (min_price !== undefined && min_price !== '') {
-      filteredProducts = filteredProducts.filter(p => p.price >= parseFloat(min_price));
+      const minPriceNum = parseFloat(min_price);
+      filteredProducts = filteredProducts.filter(p => p.price >= minPriceNum);
     }
     if (max_price !== undefined && max_price !== '') {
-      filteredProducts = filteredProducts.filter(p => p.price <= parseFloat(max_price));
+      const maxPriceNum = parseFloat(max_price);
+      filteredProducts = filteredProducts.filter(p => p.price <= maxPriceNum);
     }
 
     // Apply text search filter
