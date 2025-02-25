@@ -1,11 +1,11 @@
 # 🎨 Multi-Vendor Marketplace Backend
 
-This is a **multi-vendor marketplace Backend** built with **Node.js, Express, and Sequelize**. The platform allows **sellers** to upload and manage digital artwork (paintings), while **buyers** can purchase, review, and rate them. **Admins** have full control over users, products, and orders.
+This is a **multi-vendor marketplace Backend** built with **Node.js, Express, and Sequelize**. The platform allows **sellers** to upload and manage products, while **buyers** can purchase, review, and rate them. **Admins** have full control over users, products, and orders.
 
 ## 🚀 **Tech Stack**
 - **Backend:** Node.js, Express.js
 - **Database:** MySQL with Sequelize ORM
-- **Authentication:** Supabase (JWT-based)
+- **Authentication:** JWT
 - **API Documentation:** Swagger
 - **Payment Gateway:** Stripe (planned)
 - **Deployment:** AWS (planned)
@@ -30,7 +30,7 @@ marketplace-api/
 
 ## ✅ **Implemented Features**
 ### 🔐 **Authentication & User Management**
-- Supabase JWT-based authentication
+- JWT-based authentication
 - User roles: **Buyer, Seller, Admin**
 - Admin control over disabling/enabling users
 
@@ -56,8 +56,8 @@ marketplace-api/
 ## 🔧 **Installation & Setup**
 ### 1️⃣ Clone the repository
 ```bash
-git clone https://github.com/your-username/marketplace-api.git
-cd marketplace-api
+git clone https://github.com/ABoringBusiness/MultiVendorMarketPlace.git
+cd MultiVendorMarketPlace
 ```
 
 ### 2️⃣ Install dependencies
