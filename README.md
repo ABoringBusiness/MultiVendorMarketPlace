@@ -1,141 +1,106 @@
-When designing a multivendor marketplace, whether for physical goods, services, or digital products, there are several core features you should consider implementing to ensure a smooth experience for buyers, vendors, and administrators. Below is a comprehensive list of essential features and a brief explanation for each:
+# 🎨 Multi-Vendor Marketplace API
 
-1. User & Authentication
-User Registration & Login:
-Secure registration and login mechanisms (often with email verification, social logins, etc.) for buyers, vendors, and administrators.
+This is a **multi-vendor marketplace API** built with **Node.js, Express, and Sequelize**. The platform allows **sellers** to upload and manage digital artwork (paintings), while **buyers** can purchase, review, and rate them. **Admins** have full control over users, products, and orders.
 
-Profile Management:
-Ability for users to update their profiles, manage passwords, and view their order or sales history.
+## 🚀 **Tech Stack**
+- **Backend:** Node.js, Express.js
+- **Database:** MySQL with Sequelize ORM
+- **Authentication:** Supabase (JWT-based)
+- **API Documentation:** Swagger
+- **Payment Gateway:** Stripe (planned)
+- **Deployment:** AWS (planned)
 
-Role-Based Access Control:
-Distinguish between buyers, vendors, and admins. Each role should have tailored dashboards and access rights.
+## 📂 **Project Structure**
+```
+marketplace-api/
+│── src/
+│   ├── config/         # Database configuration
+│   ├── controllers/    # API controllers
+│   ├── middleware/     # Auth and role-based middleware
+│   ├── models/         # Sequelize models
+│   ├── routes/         # API route handlers
+│   ├── seeders/        # Database seeders
+│   ├── docs/           # Swagger API documentation
+│   ├── app.js          # Express app setup
+│── .env                # Environment variables
+│── README.md           # Documentation
+│── package.json        # Node dependencies
+│── server.js           # Server entry point
+```
 
-2. Vendor Onboarding & Management
-Vendor Registration & Approval:
-A dedicated process for vendors to sign up, submit necessary documentation, and get approved by the marketplace administrators.
+## ✅ **Implemented Features**
+### 🔐 **Authentication & User Management**
+- Supabase JWT-based authentication
+- User roles: **Buyer, Seller, Admin**
+- Admin control over disabling/enabling users
 
-Vendor Dashboard:
-Tools for vendors to manage their store profile, add or update products, view sales analytics, and handle orders.
+### 🛒 **Seller & Product Management**
+- **Sellers** can create, update, and disable their own products
+- **Admins** can enable/disable any product
+- **Products** belong to **categories**
 
-Storefront Customization:
-Allow vendors to customize their storefronts with branding elements (logos, banners, descriptions) to attract buyers.
+### 🎨 **Category Management**
+- **Admins** can manage categories
+- Products are categorized for better filtering
 
-3. Product & Inventory Management
-Product Listings:
-Easy-to-use interfaces for vendors to add products including details like descriptions, images, pricing, stock levels, and variations (size, color, etc.).
+### 🔎 **Product Search & Filtering**
+- Filter by **category**
+- Filter by **price range**
+- Search by **title or description**
 
-Categorization & Tagging:
-Organize products into categories and subcategories to improve navigation and searchability.
+### ⭐ **Reviews & Ratings**
+- **Buyers** can add/update/delete reviews for products
+- **Admins** can delete any review
+- Average ratings are calculated per product
 
-Inventory Management:
-Tools to track product stock levels, automate notifications for low stock, and manage product availability.
+## 🔧 **Installation & Setup**
+### 1️⃣ Clone the repository
+```bash
+git clone https://github.com/your-username/marketplace-api.git
+cd marketplace-api
+```
 
-4. Shopping Cart & Checkout
-Shopping Cart:
-A robust cart system where buyers can add multiple products from different vendors, review their selections, and modify quantities.
+### 2️⃣ Install dependencies
+```bash
+npm install
+```
 
-Secure Checkout Process:
-A streamlined checkout process with multiple payment options, tax calculation, and order summaries.
+### 3️⃣ Set up environment variables
+Create a `.env` file in the project root:
+```
+DATABASE_URL=mysql://root:@127.0.0.1:3306/marketplace
+JWT_SECRET=your_jwt_secret
+NODE_ENV=development
+```
 
-Order Confirmation & Tracking:
-Immediate order confirmation with detailed order information and subsequent tracking updates.
+### 4️⃣ Run database migrations & seeders
+```bash
+npx sequelize-cli db:migrate
+npx sequelize-cli db:seed:all
+```
 
-5. Payment Processing & Escrow
-Payment Gateway Integration:
-Support for various payment methods (credit/debit cards, digital wallets, bank transfers) with secure processing.
+### 5️⃣ Start the server
+```bash
+node server.js
+```
+Server will run at http://localhost:5000.
 
-Escrow Services (Optional):
-Hold funds in escrow until the buyer confirms receipt, which can increase trust between buyers and vendors.
+## 📖 API Documentation
+Swagger API documentation is available at:
+```
+http://localhost:5000/api/docs
+```
 
-Refunds & Dispute Resolution:
-A clear process for handling refunds, returns, or disputes between buyers and vendors.
+## 🎯 Next Features
+- ✅ Order & Checkout (Stripe Integration)
+- ✅ Admin Dashboard with Analytics (Planned)
 
-6. Order & Shipping Management
-Order Management System:
-Real-time order tracking for both buyers and vendors, including status updates (processing, shipped, delivered, etc.).
+## 🤝 Contributing
+1. Fork the repository
+2. Create a new branch (`feature-xyz`)
+3. Commit changes (`git commit -m 'Add xyz feature'`)
+4. Push to the branch (`git push origin feature-xyz`)
+5. Open a Pull Request 🚀
 
-Shipping Integration:
-Integration with logistics partners or shipping carriers for label generation, tracking, and cost estimation.
-
-Returns & Cancellations:
-An efficient process for order cancellations, returns, and exchanges.
-
-7. Reviews & Ratings
-Product Reviews & Ratings:
-Allow buyers to rate products and leave reviews, which help build credibility and guide future purchase decisions.
-
-Vendor Ratings:
-Enable buyers to rate vendors based on product quality, delivery, and customer service.
-
-8. Search, Filtering & Navigation
-Robust Search Engine:
-Enable buyers to quickly find products through keyword search and smart suggestions.
-
-Advanced Filtering:
-Filters by price, category, vendor, ratings, etc., to refine search results.
-
-Intuitive Navigation:
-Clear menus, categories, and breadcrumbs that help users browse the marketplace effortlessly.
-
-9. Messaging & Notifications
-Internal Messaging System:
-Facilitate communication between buyers and vendors regarding orders, product inquiries, and support issues.
-
-Automated Notifications:
-Email or SMS notifications for order updates, shipping status, promotions, and other important events.
-
-Real-Time Alerts:
-In-app notifications to keep users informed about relevant actions (e.g., new reviews, messages, or vendor responses).
-
-10. Admin Dashboard & Analytics
-Centralized Administration:
-An admin panel to manage users, vendors, products, orders, and site content.
-
-Reporting & Analytics:
-Sales reports, user behavior analytics, vendor performance metrics, and financial summaries to support data-driven decision-making.
-
-Content Management:
-Tools for managing banners, promotional content, and overall site settings.
-
-11. Marketing & Promotions
-Discounts & Coupon Codes:
-Tools for vendors or administrators to offer discounts, special promotions, or seasonal sales.
-
-Affiliate & Referral Programs:
-Incentivize users to promote the marketplace with affiliate links or referral rewards.
-
-SEO & Social Sharing:
-Optimized product pages and social media integration to enhance visibility and drive traffic.
-
-12. Multilingual & Multi-Currency Support
-Internationalization:
-Support for multiple languages and currencies, making the platform accessible to a global audience.
-
-Localization:
-Adapt user interfaces and content based on regional preferences and regulatory requirements.
-
-13. Security & Compliance
-Data Protection & Privacy:
-Adhere to GDPR, CCPA, or other relevant data protection regulations to safeguard user data.
-
-Fraud Prevention:
-Implement measures to detect and prevent fraudulent transactions or activities.
-
-Secure APIs & Endpoints:
-Use proper authentication, authorization, and encryption to secure your application.
-
-14. Mobile Responsiveness & App Integration
-Responsive Design:
-Ensure the marketplace is accessible on various devices, including desktops, tablets, and smartphones.
-
-Native Mobile App (Optional):
-Consider developing mobile applications for a more seamless user experience if your user base is mobile-centric.
-
-Conclusion
-While your multivendor marketplace may start with a subset of these features, a robust platform will eventually encompass a broad range of functionalities to support a seamless experience for all stakeholders. Prioritize features based on your business model, target audience, and growth strategy, and plan for scalable solutions that allow you to expand functionality over time.
-
-
-Run migration
-```DATABASE_URL=<DATABASE_URL> npx sequelize-cli db:migrate --env=production```
-Run seeder
-```DATABASE_URL=<DATABASE_URL> npx sequelize-cli db:seed:all --env=production```
+## 📜 License
+MIT License. Free to use and modify.
