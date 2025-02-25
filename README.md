@@ -1,6 +1,6 @@
-# 🎨 Multi-Vendor Marketplace API
+# 🎨 Multi-Vendor Marketplace Backend
 
-This is a **multi-vendor marketplace API** built with **Node.js, Express, and Sequelize**. The platform allows **sellers** to upload and manage digital artwork (paintings), while **buyers** can purchase, review, and rate them. **Admins** have full control over users, products, and orders.
+This is a **multi-vendor marketplace Backend** built with **Node.js, Express, and Sequelize**. The platform allows **sellers** to upload and manage digital artwork (paintings), while **buyers** can purchase, review, and rate them. **Admins** have full control over users, products, and orders.
 
 ## 🚀 **Tech Stack**
 - **Backend:** Node.js, Express.js
