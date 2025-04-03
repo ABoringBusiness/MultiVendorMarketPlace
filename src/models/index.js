@@ -142,6 +142,146 @@ const OrderItem = sequelize.define("OrderItem", {
   timestamps: true,
 });
 
+// Define Auction model
+const Auction = sequelize.define("Auction", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  categoryId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Categories",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  condition: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  startingBid: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  currentBid: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  startTime: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  endTime: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  imageUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  sellerId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  highestBidderId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+  },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "pending", // pending, active, completed, cancelled
+  },
+  isDisabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['categoryId'],
+      name: 'auction_category_idx'
+    },
+    {
+      fields: ['sellerId'],
+      name: 'auction_seller_idx'
+    },
+    {
+      fields: ['startTime', 'endTime'],
+      name: 'auction_time_idx'
+    },
+    {
+      fields: ['status'],
+      name: 'auction_status_idx'
+    }
+  ]
+});
+
+// Define Bid model
+const Bid = sequelize.define("Bid", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  auctionId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Auctions",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  bidderId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  amount: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['auctionId'],
+      name: 'bid_auction_idx'
+    },
+    {
+      fields: ['bidderId'],
+      name: 'bid_bidder_idx'
+    }
+  ]
+});
+
 // Define associations
 User.hasMany(Cart, { foreignKey: "userId", onDelete: "CASCADE" });
 Cart.belongsTo(User, { foreignKey: "userId" });
@@ -161,6 +301,23 @@ OrderItem.belongsTo(Order, { foreignKey: "orderId" });
 Product.hasMany(OrderItem, { foreignKey: "productId", onDelete: "CASCADE" });
 OrderItem.belongsTo(Product, { foreignKey: "productId", as: "product" });
 
+// Auction associations
+User.hasMany(Auction, { foreignKey: "sellerId", as: "auctions" });
+Auction.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
+
+User.hasMany(Auction, { foreignKey: "highestBidderId", as: "wonAuctions" });
+Auction.belongsTo(User, { foreignKey: "highestBidderId", as: "highestBidder" });
+
+Category.hasMany(Auction, { foreignKey: "categoryId" });
+Auction.belongsTo(Category, { foreignKey: "categoryId" });
+
+// Bid associations
+User.hasMany(Bid, { foreignKey: "bidderId", as: "bids" });
+Bid.belongsTo(User, { foreignKey: "bidderId", as: "bidder" });
+
+Auction.hasMany(Bid, { foreignKey: "auctionId", as: "bids" });
+Bid.belongsTo(Auction, { foreignKey: "auctionId", as: "auction" });
+
 const db = { 
   sequelize, 
   User, 
@@ -169,7 +326,9 @@ const db = {
   Cart, 
   CartItem, 
   Order, 
-  OrderItem 
+  OrderItem,
+  Auction,
+  Bid
 };
 
 // Sync models with database

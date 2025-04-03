@@ -10,6 +10,8 @@ const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const auctionRoutes = require("./routes/auctionRoutes");
+const bidRoutes = require("./routes/bidRoutes");
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/auctions", auctionRoutes);
+app.use("/api/bids", bidRoutes);
 
 // Swagger Docs
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
@@ -49,5 +53,65 @@ app.use((err, req, res, next) => {
     error: process.env.NODE_ENV === "production" ? null : err.message
   });
 });
+
+// Scheduled task to update auction statuses
+const updateAuctionStatuses = async () => {
+  try {
+    const { Auction, Bid } = require("./models");
+    const { Op } = require("sequelize");
+    const now = new Date();
+    
+    // Update pending auctions to active if start time has passed
+    await Auction.update(
+      { status: 'active' },
+      { 
+        where: { 
+          status: 'pending',
+          startTime: { [Op.lte]: now },
+          endTime: { [Op.gt]: now }
+        }
+      }
+    );
+    
+    // Update active auctions to completed if end time has passed
+    const completedAuctions = await Auction.findAll({
+      where: {
+        status: 'active',
+        endTime: { [Op.lte]: now }
+      },
+      include: [
+        { model: Bid, as: 'bids', required: false }
+      ]
+    });
+    
+    // Process each completed auction
+    for (const auction of completedAuctions) {
+      auction.status = 'completed';
+      
+      // If there are bids, set the highest bidder
+      if (auction.bids && auction.bids.length > 0) {
+        // Find highest bid
+        const highestBid = auction.bids.reduce((prev, current) => 
+          (prev.amount > current.amount) ? prev : current
+        );
+        
+        auction.highestBidderId = highestBid.bidderId;
+        auction.currentBid = highestBid.amount;
+      }
+      
+      await auction.save();
+    }
+    
+    console.log(`Auction status update: ${completedAuctions.length} auctions completed`);
+  } catch (error) {
+    console.error("Error updating auction statuses:", error);
+  }
+};
+
+// Run auction status update every minute
+setInterval(updateAuctionStatuses, 60000);
+
+// Run once at startup
+updateAuctionStatuses();
 
 module.exports = app;
