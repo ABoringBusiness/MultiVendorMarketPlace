@@ -4,6 +4,160 @@ const User = require("./User");
 const Product = require("./Product");
 const Category = require("./Category");
 
+// Define ServiceUsage model for billing by the minute
+const ServiceUsage = sequelize.define("ServiceUsage", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  serviceType: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    // Types: 'auction', 'marketplace', 'premium_listing', 'featured_product', etc.
+  },
+  startTime: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+  },
+  endTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  durationMinutes: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  ratePerMinute: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  totalCost: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'active', // active, completed, billed
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  metadata: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['userId'],
+      name: 'service_usage_user_idx'
+    },
+    {
+      fields: ['serviceType'],
+      name: 'service_usage_type_idx'
+    },
+    {
+      fields: ['status'],
+      name: 'service_usage_status_idx'
+    },
+    {
+      fields: ['startTime', 'endTime'],
+      name: 'service_usage_time_idx'
+    }
+  ]
+});
+
+// Define ServiceBilling model for invoices
+const ServiceBilling = sequelize.define("ServiceBilling", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  billingPeriodStart: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  billingPeriodEnd: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  totalAmount: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'pending', // pending, paid, overdue, cancelled
+  },
+  dueDate: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  paymentDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  paymentMethod: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  invoiceNumber: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['userId'],
+      name: 'service_billing_user_idx'
+    },
+    {
+      fields: ['status'],
+      name: 'service_billing_status_idx'
+    },
+    {
+      fields: ['invoiceNumber'],
+      name: 'service_billing_invoice_idx'
+    },
+    {
+      fields: ['billingPeriodStart', 'billingPeriodEnd'],
+      name: 'service_billing_period_idx'
+    }
+  ]
+});
+
 // Define Cart model
 const Cart = sequelize.define("Cart", {
   id: {
@@ -318,6 +472,70 @@ Bid.belongsTo(User, { foreignKey: "bidderId", as: "bidder" });
 Auction.hasMany(Bid, { foreignKey: "auctionId", as: "bids" });
 Bid.belongsTo(Auction, { foreignKey: "auctionId", as: "auction" });
 
+// Service usage and billing associations
+User.hasMany(ServiceUsage, { foreignKey: "userId", as: "serviceUsages" });
+ServiceUsage.belongsTo(User, { foreignKey: "userId" });
+
+User.hasMany(ServiceBilling, { foreignKey: "userId", as: "serviceBillings" });
+ServiceBilling.belongsTo(User, { foreignKey: "userId" });
+
+// Many-to-many relationship between ServiceBilling and ServiceUsage
+const ServiceBillingItem = sequelize.define('ServiceBillingItem', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  serviceBillingId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "ServiceBillings",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  serviceUsageId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "ServiceUsages",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  amount: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  }
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['serviceBillingId'],
+      name: 'billing_item_billing_idx'
+    },
+    {
+      fields: ['serviceUsageId'],
+      name: 'billing_item_usage_idx'
+    }
+  ]
+});
+
+ServiceBilling.belongsToMany(ServiceUsage, { 
+  through: ServiceBillingItem, 
+  foreignKey: 'serviceBillingId', 
+  otherKey: 'serviceUsageId',
+  as: 'usages'
+});
+
+ServiceUsage.belongsToMany(ServiceBilling, { 
+  through: ServiceBillingItem, 
+  foreignKey: 'serviceUsageId', 
+  otherKey: 'serviceBillingId',
+  as: 'billings'
+});
+
 const db = { 
   sequelize, 
   User, 
@@ -328,7 +546,10 @@ const db = {
   Order, 
   OrderItem,
   Auction,
-  Bid
+  Bid,
+  ServiceUsage,
+  ServiceBilling,
+  ServiceBillingItem
 };
 
 // Sync models with database
