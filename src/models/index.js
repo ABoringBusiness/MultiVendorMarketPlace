@@ -1,9 +1,176 @@
 const sequelize = require("../config/database");
+const { DataTypes } = require("sequelize");
 const User = require("./User");
 const Product = require("./Product");
 const Category = require("./Category");
 
-const db = { sequelize, User, Product, Category};
+// Define Cart model
+const Cart = sequelize.define("Cart", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+}, {
+  timestamps: true,
+});
+
+// Define CartItem model
+const CartItem = sequelize.define("CartItem", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  cartId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Carts",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  productId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Products",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  quantity: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+  },
+}, {
+  timestamps: true,
+});
+
+// Define Order model
+const Order = sequelize.define("Order", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  total: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "pending",
+  },
+  shippingAddress: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  paymentStatus: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "unpaid",
+  },
+  stripeSessionId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+}, {
+  timestamps: true,
+});
+
+// Define OrderItem model
+const OrderItem = sequelize.define("OrderItem", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  orderId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Orders",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  productId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Products",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  quantity: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+  },
+  unitPrice: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  totalPrice: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+}, {
+  timestamps: true,
+});
+
+// Define associations
+User.hasMany(Cart, { foreignKey: "userId", onDelete: "CASCADE" });
+Cart.belongsTo(User, { foreignKey: "userId" });
+
+Cart.hasMany(CartItem, { foreignKey: "cartId", onDelete: "CASCADE", as: "items" });
+CartItem.belongsTo(Cart, { foreignKey: "cartId" });
+
+Product.hasMany(CartItem, { foreignKey: "productId", onDelete: "CASCADE" });
+CartItem.belongsTo(Product, { foreignKey: "productId", as: "product" });
+
+User.hasMany(Order, { foreignKey: "userId", onDelete: "CASCADE" });
+Order.belongsTo(User, { foreignKey: "userId" });
+
+Order.hasMany(OrderItem, { foreignKey: "orderId", onDelete: "CASCADE", as: "items" });
+OrderItem.belongsTo(Order, { foreignKey: "orderId" });
+
+Product.hasMany(OrderItem, { foreignKey: "productId", onDelete: "CASCADE" });
+OrderItem.belongsTo(Product, { foreignKey: "productId", as: "product" });
+
+const db = { 
+  sequelize, 
+  User, 
+  Product, 
+  Category, 
+  Cart, 
+  CartItem, 
+  Order, 
+  OrderItem 
+};
 
 // Sync models with database
 db.sequelize.sync({ alter: true })

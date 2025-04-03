@@ -1,100 +1,230 @@
-'use strict';
+const { Order, OrderItem, Product, Cart, CartItem, User } = require("../models");
 
-const { Order, OrderItem, Product } = require('../../models');
-
-/**
- * Create a new order.
- * This example assumes that the request body includes an array of items.
- * Each item should include product_id and quantity.
- * In a real-world scenario, you might calculate totals, handle payment, etc.
- */
+// @desc Create a new order from cart
+// @route POST /api/orders/create
 exports.createOrder = async (req, res) => {
   try {
-    const user_id = req.user.id; // Authenticated user's ID
-    const { items, shipping_address } = req.body;
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ message: 'No order items provided.' });
+    const userId = req.user.id;
+    const { shippingAddress } = req.body;
+    
+    // Find user's cart
+    const cart = await Cart.findOne({ 
+      where: { userId },
+      include: [{
+        model: CartItem,
+        as: "items",
+        include: [{
+          model: Product,
+          as: "product"
+        }]
+      }]
+    });
+    
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
     }
-
-    // Calculate order totals by fetching product details.
+    
+    // Calculate order total and prepare order items
     let total = 0;
-    const orderItemsData = await Promise.all(
-      items.map(async (item) => {
-        // Fetch product to get unit price
-        const product = await Product.findByPk(item.product_id);
-        if (!product) {
-          throw new Error(`Product with ID ${item.product_id} not found.`);
-        }
-        const unit_price = parseFloat(product.price);
-        const quantity = item.quantity || 1;
-        const total_price = unit_price * quantity;
-        total += total_price;
-        return {
-          product_id: item.product_id,
-          quantity,
-          unit_price,
-          total_price,
-        };
-      })
-    );
-
-    // Create the order record
+    const orderItemsData = cart.items.map(item => {
+      const unitPrice = item.product.price;
+      const quantity = item.quantity;
+      const totalPrice = unitPrice * quantity;
+      
+      total += totalPrice;
+      
+      return {
+        productId: item.productId,
+        quantity,
+        unitPrice,
+        totalPrice
+      };
+    });
+    
+    // Create order
     const order = await Order.create({
-      user_id,
+      userId,
       total,
-      shipping_address: shipping_address || null,
-      status: 'pending',
-      payment_status: 'unpaid',
+      shippingAddress: shippingAddress || null,
+      status: "pending",
+      paymentStatus: "unpaid"
     });
-
-    // Create order items associated with the order
-    const orderItems = await Promise.all(
-      orderItemsData.map(async (itemData) => {
-        itemData.order_id = order.id;
-        return await OrderItem.create(itemData);
-      })
+    
+    // Create order items
+    await Promise.all(
+      orderItemsData.map(itemData => 
+        OrderItem.create({
+          ...itemData,
+          orderId: order.id
+        })
+      )
     );
-
-    // Reload order to include order items
-    const orderDetails = await Order.findByPk(order.id, {
-      include: [{ model: OrderItem, as: 'items', include: [{ model: Product, as: 'product' }] }],
+    
+    // Clear cart after order creation
+    await CartItem.destroy({ where: { cartId: cart.id } });
+    
+    // Get order with items
+    const orderWithItems = await Order.findByPk(order.id, {
+      include: [{
+        model: OrderItem,
+        as: "items",
+        include: [{
+          model: Product,
+          as: "product"
+        }]
+      }]
     });
-
-    res.status(201).json({ order: orderDetails });
+    
+    res.status(201).json({
+      message: "Order created successfully",
+      order: orderWithItems
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Create order error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-/**
- * Get all orders for the authenticated user.
- */
+// @desc Get all orders for the authenticated user
+// @route GET /api/orders/list
 exports.getUserOrders = async (req, res) => {
   try {
-    const user_id = req.user.id;
+    const userId = req.user.id;
+    
     const orders = await Order.findAll({
-      where: { user_id },
-      include: [{ model: OrderItem, as: 'items', include: [{ model: Product, as: 'product' }] }],
-      order: [['created_at', 'DESC']],
+      where: { userId },
+      include: [{
+        model: OrderItem,
+        as: "items",
+        include: [{
+          model: Product,
+          as: "product",
+          attributes: ["id", "title", "price", "imageUrl"]
+        }]
+      }],
+      order: [["createdAt", "DESC"]]
     });
+    
     res.json({ orders });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get user orders error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-/**
- * Get details for a single order by ID.
- */
+// @desc Get order details by ID
+// @route GET /api/orders/:id
 exports.getOrderById = async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: OrderItem, as: 'items', include: [{ model: Product, as: 'product' }] }],
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    const order = await Order.findOne({
+      where: { 
+        id,
+        userId // Ensure user can only access their own orders
+      },
+      include: [{
+        model: OrderItem,
+        as: "items",
+        include: [{
+          model: Product,
+          as: "product",
+          attributes: ["id", "title", "price", "imageUrl", "sellerId"]
+        }]
+      }]
     });
-    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    
     res.json({ order });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get order details error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc Update order status (Seller/Admin only)
+// @route PUT /api/orders/:id/update-status
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const userId = req.user.id;
+    
+    if (!status || !["pending", "processing", "shipped", "delivered", "cancelled"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+    
+    // Find the order with items
+    const order = await Order.findByPk(id, {
+      include: [{
+        model: OrderItem,
+        as: "items",
+        include: [{
+          model: Product,
+          as: "product"
+        }]
+      }]
+    });
+    
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    
+    // Check if user is seller of any product in the order or admin
+    const isSeller = order.items.some(item => item.product.sellerId === userId);
+    const isAdmin = req.user.role === "admin";
+    
+    if (!isSeller && !isAdmin) {
+      return res.status(403).json({ message: "Not authorized to update this order" });
+    }
+    
+    // Update order status
+    order.status = status;
+    await order.save();
+    
+    res.json({
+      message: "Order status updated successfully",
+      order
+    });
+  } catch (error) {
+    console.error("Update order status error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc Get seller's orders
+// @route GET /api/orders/seller
+exports.getSellerOrders = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+    
+    if (req.user.role !== "seller" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    
+    // Find all orders that contain products sold by this seller
+    const orders = await Order.findAll({
+      include: [{
+        model: OrderItem,
+        as: "items",
+        required: true,
+        include: [{
+          model: Product,
+          as: "product",
+          required: true,
+          where: { sellerId }
+        }]
+      }],
+      order: [["createdAt", "DESC"]]
+    });
+    
+    res.json({ orders });
+  } catch (error) {
+    console.error("Get seller orders error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

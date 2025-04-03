@@ -1,113 +1,233 @@
-'use strict';
+const { Cart, CartItem, Product, User } = require("../models");
 
-const { Cart, CartItem, Product } = require('../../models');
-
-/**
- * Get the current user's cart. If no cart exists, create one.
- */
+// @desc Get user's cart
+// @route GET /api/cart
 exports.getCart = async (req, res) => {
   try {
-    const user_id = req.user.id;
-    let cart = await Cart.findOne({
-      where: { user_id },
-      include: [
-        {
-          model: CartItem,
-          as: 'items',
-          include: [{ model: Product, as: 'product' }],
-        },
-      ],
+    const userId = req.user.id;
+    
+    // Find or create cart
+    let [cart, created] = await Cart.findOrCreate({
+      where: { userId },
+      defaults: { userId }
     });
-    if (!cart) {
-      cart = await Cart.create({ user_id });
-    }
-    res.json({ cart });
+    
+    // Get cart items with product details
+    const cartItems = await CartItem.findAll({
+      where: { cartId: cart.id },
+      include: [
+        { 
+          model: Product, 
+          as: "product",
+          attributes: ["id", "title", "price", "imageUrl"]
+        }
+      ]
+    });
+    
+    // Calculate total
+    let total = 0;
+    cartItems.forEach(item => {
+      if (item.product) {
+        total += item.product.price * item.quantity;
+      }
+    });
+    
+    res.json({
+      id: cart.id,
+      items: cartItems,
+      total,
+      itemCount: cartItems.length
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get cart error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-/**
- * Add an item to the current user's cart.
- */
-exports.addItemToCart = async (req, res) => {
+// @desc Add item to cart
+// @route POST /api/cart
+exports.addToCart = async (req, res) => {
   try {
-    const user_id = req.user.id;
-    const { product_id, quantity } = req.body;
-
-    // Find or create the user's cart
-    let cart = await Cart.findOne({ where: { user_id } });
-    if (!cart) {
-      cart = await Cart.create({ user_id });
+    const userId = req.user.id;
+    const { productId, quantity = 1 } = req.body;
+    
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required" });
     }
-
-    // Check if the item already exists in the cart
-    let item = await CartItem.findOne({
-      where: { cart_id: cart.id, product_id },
+    
+    // Validate product exists and is not disabled
+    const product = await Product.findOne({
+      where: { id: productId, isDisabled: false }
     });
-    if (item) {
-      // Update quantity if the item already exists
-      item.quantity += quantity || 1;
-      await item.save();
+    
+    if (!product) {
+      return res.status(404).json({ message: "Product not found or unavailable" });
+    }
+    
+    // Find or create cart
+    let [cart, created] = await Cart.findOrCreate({
+      where: { userId },
+      defaults: { userId }
+    });
+    
+    // Check if item already exists in cart
+    let cartItem = await CartItem.findOne({
+      where: { cartId: cart.id, productId }
+    });
+    
+    if (cartItem) {
+      // Update quantity if item exists
+      cartItem.quantity += parseInt(quantity);
+      await cartItem.save();
     } else {
-      // Otherwise, create a new cart item
-      item = await CartItem.create({
-        cart_id: cart.id,
-        product_id,
-        quantity: quantity || 1,
+      // Create new cart item
+      cartItem = await CartItem.create({
+        cartId: cart.id,
+        productId,
+        quantity: parseInt(quantity)
       });
     }
-    res.status(201).json({ item });
+    
+    // Get updated cart
+    const updatedCart = await getUpdatedCart(cart.id);
+    
+    res.status(201).json({
+      message: "Item added to cart",
+      cart: updatedCart
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Add to cart error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-/**
- * Update the quantity of a cart item.
- */
+// @desc Update cart item
+// @route PUT /api/cart/:itemId
 exports.updateCartItem = async (req, res) => {
   try {
-    const { id } = req.params; // Cart item ID
+    const { itemId } = req.params;
     const { quantity } = req.body;
-
-    let item = await CartItem.findByPk(id);
-    if (!item) return res.status(404).json({ message: 'Cart item not found.' });
-
-    item.quantity = quantity;
-    await item.save();
-    res.json({ item });
+    const userId = req.user.id;
+    
+    if (!quantity || quantity < 1) {
+      return res.status(400).json({ message: "Quantity must be at least 1" });
+    }
+    
+    // Find the cart item
+    const cartItem = await CartItem.findByPk(itemId, {
+      include: [{ model: Cart, where: { userId } }]
+    });
+    
+    if (!cartItem) {
+      return res.status(404).json({ message: "Cart item not found" });
+    }
+    
+    // Update quantity
+    cartItem.quantity = parseInt(quantity);
+    await cartItem.save();
+    
+    // Get updated cart
+    const updatedCart = await getUpdatedCart(cartItem.cartId);
+    
+    res.json({
+      message: "Cart item updated",
+      cart: updatedCart
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Update cart item error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-/**
- * Remove a cart item.
- */
+// @desc Remove item from cart
+// @route DELETE /api/cart/:itemId
 exports.removeCartItem = async (req, res) => {
   try {
-    const { id } = req.params; // Cart item ID
-    const item = await CartItem.findByPk(id);
-    if (!item) return res.status(404).json({ message: 'Cart item not found.' });
-    await item.destroy();
-    res.json({ message: 'Item removed from cart.' });
+    const { itemId } = req.params;
+    const userId = req.user.id;
+    
+    // Find the cart item
+    const cartItem = await CartItem.findByPk(itemId, {
+      include: [{ model: Cart, where: { userId } }]
+    });
+    
+    if (!cartItem) {
+      return res.status(404).json({ message: "Cart item not found" });
+    }
+    
+    const cartId = cartItem.cartId;
+    
+    // Delete the cart item
+    await cartItem.destroy();
+    
+    // Get updated cart
+    const updatedCart = await getUpdatedCart(cartId);
+    
+    res.json({
+      message: "Item removed from cart",
+      cart: updatedCart
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Remove cart item error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-/**
- * Clear the current user's cart.
- */
+// @desc Clear cart
+// @route DELETE /api/cart
 exports.clearCart = async (req, res) => {
   try {
-    const user_id = req.user.id;
-    const cart = await Cart.findOne({ where: { user_id } });
-    if (!cart) return res.status(404).json({ message: 'Cart not found.' });
-    await CartItem.destroy({ where: { cart_id: cart.id } });
-    res.json({ message: 'Cart cleared.' });
+    const userId = req.user.id;
+    
+    // Find user's cart
+    const cart = await Cart.findOne({ where: { userId } });
+    
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+    
+    // Delete all cart items
+    await CartItem.destroy({ where: { cartId: cart.id } });
+    
+    res.json({
+      message: "Cart cleared",
+      cart: {
+        id: cart.id,
+        items: [],
+        total: 0,
+        itemCount: 0
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Clear cart error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+// Helper function to get updated cart with items and total
+async function getUpdatedCart(cartId) {
+  const cartItems = await CartItem.findAll({
+    where: { cartId },
+    include: [
+      { 
+        model: Product, 
+        as: "product",
+        attributes: ["id", "title", "price", "imageUrl"]
+      }
+    ]
+  });
+  
+  let total = 0;
+  cartItems.forEach(item => {
+    if (item.product) {
+      total += item.product.price * item.quantity;
+    }
+  });
+  
+  return {
+    id: cartId,
+    items: cartItems,
+    total,
+    itemCount: cartItems.length
+  };
+}
