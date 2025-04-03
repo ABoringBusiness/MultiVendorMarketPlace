@@ -1,0 +1,758 @@
+{
+  "info": {
+    "_postman_id": "a8b5e3c7-f8d2-4e5a-9b3c-d7e9f8c6a5b4",
+    "name": "MultiVendor Marketplace Admin Panel APIs",
+    "description": "API collection for testing the seller and buyer admin panel endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"seller@example.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login to get JWT token"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "Seller Admin",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "dashboard"]
+            },
+            "description": "Get seller dashboard statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/products?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get seller products"
+          },
+          "response": []
+        },
+        {
+          "name": "Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/orders?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateTo",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get seller orders"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"processing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/orders/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "orders", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Update order status"
+          },
+          "response": []
+        },
+        {
+          "name": "Reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/reviews?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "reviews"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "rating",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "productId",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get seller reviews"
+          },
+          "response": []
+        },
+        {
+          "name": "Respond to Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"response\": \"Thank you for your feedback!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/reviews/:id/respond",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "reviews", ":id", "respond"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Respond to a review"
+          },
+          "response": []
+        },
+        {
+          "name": "Inventory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/inventory?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "inventory"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "lowStock",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get seller inventory"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Inventory",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"stockQuantity\": 100,\n    \"price\": 29.99,\n    \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/inventory/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "inventory", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Update inventory"
+          },
+          "response": []
+        },
+        {
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "profile"]
+            },
+            "description": "Get seller profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Seller Store\",\n    \"email\": \"seller@example.com\",\n    \"phone\": \"1234567890\",\n    \"description\": \"We sell high-quality products\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/seller/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "seller", "profile"]
+            },
+            "description": "Update seller profile"
+          },
+          "response": []
+        }
+      ],
+      "description": "Seller admin panel endpoints"
+    },
+    {
+      "name": "Buyer Admin",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "dashboard"]
+            },
+            "description": "Get buyer dashboard statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/orders?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "dateTo",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get buyer orders"
+          },
+          "response": []
+        },
+        {
+          "name": "Order Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/orders/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "orders", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get order details"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"reason\": \"Changed my mind\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/orders/:id/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "orders", ":id", "cancel"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Cancel order"
+          },
+          "response": []
+        },
+        {
+          "name": "Reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/reviews?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "reviews"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "rating",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "productId",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get buyer reviews"
+          },
+          "response": []
+        },
+        {
+          "name": "Create/Update Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"productId\": \"1\",\n    \"orderId\": \"1\",\n    \"rating\": 5,\n    \"title\": \"Great product\",\n    \"comment\": \"I love this product!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "reviews"]
+            },
+            "description": "Create or update review"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/reviews/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "reviews", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Delete review"
+          },
+          "response": []
+        },
+        {
+          "name": "Wishlist",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/wishlist?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "wishlist"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get buyer wishlist"
+          },
+          "response": []
+        },
+        {
+          "name": "Add to Wishlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"productId\": \"1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/wishlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "wishlist"]
+            },
+            "description": "Add to wishlist"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove from Wishlist",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/wishlist/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "wishlist", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Remove from wishlist"
+          },
+          "response": []
+        },
+        {
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "profile"]
+            },
+            "description": "Get buyer profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"buyer@example.com\",\n    \"phone\": \"1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/buyer/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "buyer", "profile"]
+            },
+            "description": "Update buyer profile"
+          },
+          "response": []
+        }
+      ],
+      "description": "Buyer admin panel endpoints"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_JWT_TOKEN",
+      "type": "string"
+    }
+  ]
+}
