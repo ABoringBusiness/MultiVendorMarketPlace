@@ -70,6 +70,13 @@ marketplace-api/
 - Anti-sniping protection
 - Auction history tracking
 
+### 💰 **Penny Auction System**
+- Pay-per-bid auction model
+- Bid packages for purchasing bids
+- Auto-bidding functionality
+- Timer extension with each bid
+- Detailed bid statistics and history
+
 ### 💰 **Service Billing**
 - Minute-based billing for platform services
 - Track service usage by type
@@ -200,6 +207,36 @@ https://localhost/api/docs
 - `POST /api/services/billing/generate` - Generate billing for service usage
 - `GET /api/services/billing` - Get user's billing history
 - `GET /api/services/stats` - Get service usage statistics
+
+### 💰 Penny Auctions
+- `POST /api/penny-auctions` - Create a new penny auction
+- `GET /api/penny-auctions` - Get all penny auctions with filters
+- `GET /api/penny-auctions/{id}` - Get penny auction details
+- `PUT /api/penny-auctions/{id}` - Update penny auction
+- `DELETE /api/penny-auctions/{id}` - Cancel penny auction
+- `GET /api/penny-auctions/seller` - Get seller's penny auctions
+- `GET /api/penny-auctions/won` - Get won penny auctions
+- `GET /api/penny-auctions/bidding` - Get auctions user has bid on
+- `GET /api/penny-auctions/stats` - Get penny auction statistics
+
+### 🎯 Penny Bids
+- `POST /api/penny-bids/{pennyAuctionId}` - Place a bid on a penny auction
+- `GET /api/penny-bids/{pennyAuctionId}` - Get all bids for a penny auction
+- `GET /api/penny-bids/user` - Get user's penny bids
+- `POST /api/penny-bids/{pennyAuctionId}/auto-bid` - Configure auto-bidding
+- `DELETE /api/penny-bids/{pennyAuctionId}/auto-bid` - Stop auto-bidding
+- `GET /api/penny-bids/{pennyAuctionId}/stats` - Get bid statistics
+
+### 💳 Bid Packages
+- `POST /api/bid-packages` - Create a new bid package (admin)
+- `GET /api/bid-packages` - Get all bid packages
+- `GET /api/bid-packages/{id}` - Get bid package details
+- `PUT /api/bid-packages/{id}` - Update bid package (admin)
+- `DELETE /api/bid-packages/{id}` - Delete bid package (admin)
+- `POST /api/bid-packages/{id}/purchase` - Purchase a bid package
+- `GET /api/bid-packages/balance` - Get user's bid balance
+- `GET /api/bid-packages/transactions` - Get user's bid transactions
+- `POST /api/bid-packages/add-free-bids` - Add free bids to user (admin)
 
 ## 🎯 Next Features
 - ✅ Admin Dashboard with Analytics

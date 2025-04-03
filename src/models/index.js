@@ -436,6 +436,443 @@ const Bid = sequelize.define("Bid", {
   ]
 });
 
+// Define PennyAuction model
+const PennyAuction = sequelize.define("PennyAuction", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  categoryId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Categories",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  imageUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  retailPrice: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  startingPrice: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  currentPrice: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  bidIncrement: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    defaultValue: 0.01, // Default penny increment
+  },
+  bidCost: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    defaultValue: 0.50, // Default cost per bid
+  },
+  startTime: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  endTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  timerSeconds: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 10, // Default timer extension in seconds
+  },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'pending', // pending, active, completed, cancelled
+  },
+  highestBidderId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+  },
+  totalBids: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  isDisabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  sellerId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  featured: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['categoryId'],
+      name: 'penny_auction_category_idx'
+    },
+    {
+      fields: ['sellerId'],
+      name: 'penny_auction_seller_idx'
+    },
+    {
+      fields: ['startTime', 'endTime'],
+      name: 'penny_auction_time_idx'
+    },
+    {
+      fields: ['status'],
+      name: 'penny_auction_status_idx'
+    },
+    {
+      fields: ['featured'],
+      name: 'penny_auction_featured_idx'
+    }
+  ]
+});
+
+// Define PennyBid model
+const PennyBid = sequelize.define("PennyBid", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  pennyAuctionId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "PennyAuctions",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  bidderId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  bidAmount: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  bidCost: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  newPrice: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  timerExtended: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  isAutoBid: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['pennyAuctionId'],
+      name: 'penny_bid_auction_idx'
+    },
+    {
+      fields: ['bidderId'],
+      name: 'penny_bid_bidder_idx'
+    },
+    {
+      fields: ['createdAt'],
+      name: 'penny_bid_time_idx'
+    }
+  ]
+});
+
+// Define BidPackage model for penny auctions
+const BidPackage = sequelize.define("BidPackage", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  bidCount: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  price: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  discountPercentage: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  imageUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  featured: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['isActive'],
+      name: 'bid_package_active_idx'
+    },
+    {
+      fields: ['featured'],
+      name: 'bid_package_featured_idx'
+    }
+  ]
+});
+
+// Define UserBidBalance model
+const UserBidBalance = sequelize.define("UserBidBalance", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  bidBalance: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  totalBidsPurchased: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  totalBidsUsed: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  lastPurchaseDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['userId'],
+      name: 'user_bid_balance_user_idx',
+      unique: true
+    }
+  ]
+});
+
+// Define BidTransaction model
+const BidTransaction = sequelize.define("BidTransaction", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  bidPackageId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: "BidPackages",
+      key: "id",
+    },
+    onDelete: "SET NULL",
+  },
+  transactionType: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    // Types: 'purchase', 'use', 'refund', 'bonus', 'expiry'
+  },
+  bidCount: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  amount: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  paymentMethod: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  paymentStatus: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'pending', // pending, completed, failed, refunded
+  },
+  stripeSessionId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  metadata: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['userId'],
+      name: 'bid_transaction_user_idx'
+    },
+    {
+      fields: ['bidPackageId'],
+      name: 'bid_transaction_package_idx'
+    },
+    {
+      fields: ['transactionType'],
+      name: 'bid_transaction_type_idx'
+    },
+    {
+      fields: ['paymentStatus'],
+      name: 'bid_transaction_status_idx'
+    },
+    {
+      fields: ['createdAt'],
+      name: 'bid_transaction_time_idx'
+    }
+  ]
+});
+
+// Define AutoBidConfig model
+const AutoBidConfig = sequelize.define("AutoBidConfig", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  pennyAuctionId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "PennyAuctions",
+      key: "id",
+    },
+    onDelete: "CASCADE",
+  },
+  maxBids: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  bidsUsed: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  stopWhenOutbid: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  bidDelaySec: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['userId'],
+      name: 'auto_bid_user_idx'
+    },
+    {
+      fields: ['pennyAuctionId'],
+      name: 'auto_bid_auction_idx'
+    },
+    {
+      fields: ['isActive'],
+      name: 'auto_bid_active_idx'
+    }
+  ]
+});
+
 // Define associations
 User.hasMany(Cart, { foreignKey: "userId", onDelete: "CASCADE" });
 Cart.belongsTo(User, { foreignKey: "userId" });
@@ -471,6 +908,41 @@ Bid.belongsTo(User, { foreignKey: "bidderId", as: "bidder" });
 
 Auction.hasMany(Bid, { foreignKey: "auctionId", as: "bids" });
 Bid.belongsTo(Auction, { foreignKey: "auctionId", as: "auction" });
+
+// Penny Auction associations
+User.hasMany(PennyAuction, { foreignKey: "sellerId", as: "pennyAuctions" });
+PennyAuction.belongsTo(User, { foreignKey: "sellerId", as: "seller" });
+
+User.hasMany(PennyAuction, { foreignKey: "highestBidderId", as: "wonPennyAuctions" });
+PennyAuction.belongsTo(User, { foreignKey: "highestBidderId", as: "highestBidder" });
+
+Category.hasMany(PennyAuction, { foreignKey: "categoryId" });
+PennyAuction.belongsTo(Category, { foreignKey: "categoryId" });
+
+// Penny Bid associations
+User.hasMany(PennyBid, { foreignKey: "bidderId", as: "pennyBids" });
+PennyBid.belongsTo(User, { foreignKey: "bidderId", as: "bidder" });
+
+PennyAuction.hasMany(PennyBid, { foreignKey: "pennyAuctionId", as: "bids" });
+PennyBid.belongsTo(PennyAuction, { foreignKey: "pennyAuctionId", as: "pennyAuction" });
+
+// Bid Balance associations
+User.hasOne(UserBidBalance, { foreignKey: "userId", as: "bidBalance" });
+UserBidBalance.belongsTo(User, { foreignKey: "userId" });
+
+// Bid Transaction associations
+User.hasMany(BidTransaction, { foreignKey: "userId", as: "bidTransactions" });
+BidTransaction.belongsTo(User, { foreignKey: "userId" });
+
+BidPackage.hasMany(BidTransaction, { foreignKey: "bidPackageId", as: "transactions" });
+BidTransaction.belongsTo(BidPackage, { foreignKey: "bidPackageId", as: "bidPackage" });
+
+// Auto Bid Config associations
+User.hasMany(AutoBidConfig, { foreignKey: "userId", as: "autoBidConfigs" });
+AutoBidConfig.belongsTo(User, { foreignKey: "userId" });
+
+PennyAuction.hasMany(AutoBidConfig, { foreignKey: "pennyAuctionId", as: "autoBidConfigs" });
+AutoBidConfig.belongsTo(PennyAuction, { foreignKey: "pennyAuctionId", as: "pennyAuction" });
 
 // Service usage and billing associations
 User.hasMany(ServiceUsage, { foreignKey: "userId", as: "serviceUsages" });
@@ -549,7 +1021,13 @@ const db = {
   Bid,
   ServiceUsage,
   ServiceBilling,
-  ServiceBillingItem
+  ServiceBillingItem,
+  PennyAuction,
+  PennyBid,
+  BidPackage,
+  UserBidBalance,
+  BidTransaction,
+  AutoBidConfig
 };
 
 // Sync models with database
