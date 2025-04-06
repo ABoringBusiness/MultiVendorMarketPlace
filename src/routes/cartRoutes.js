@@ -1,8 +1,11 @@
-'use strict';
-const express = require('express');
+const express = require("express");
+const { getCart, addToCart, updateCartItem, removeCartItem, clearCart } = require("../controllers/cartController");
+const authMiddleware = require("../middleware/authMiddleware");
+
 const router = express.Router();
-const cartController = require('../controllers/cartController');
-const authMiddleware = require('../middlewares/auth');
+
+// All cart routes require authentication
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -15,21 +18,21 @@ const authMiddleware = require('../middlewares/auth');
  * @swagger
  * /api/cart:
  *   get:
- *     summary: Get the current user's cart
+ *     summary: Get user's cart
  *     tags: [Cart]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User's cart retrieved successfully.
+ *         description: User's cart with items
  */
-router.get('/', authMiddleware, cartController.getCart);
+router.get("/", getCart);
 
 /**
  * @swagger
- * /api/cart/items:
+ * /api/cart:
  *   post:
- *     summary: Add an item to the current user's cart
+ *     summary: Add item to cart
  *     tags: [Cart]
  *     security:
  *       - bearerAuth: []
@@ -40,84 +43,83 @@ router.get('/', authMiddleware, cartController.getCart);
  *           schema:
  *             type: object
  *             required:
- *               - product_id
+ *               - productId
  *             properties:
- *               product_id:
- *                 type: integer
- *                 example: 1
+ *               productId:
+ *                 type: string
  *               quantity:
  *                 type: integer
- *                 example: 2
+ *                 default: 1
  *     responses:
  *       201:
- *         description: Item added to cart successfully.
+ *         description: Item added to cart
  */
-router.post('/items', authMiddleware, cartController.addItemToCart);
+router.post("/", addToCart);
 
 /**
  * @swagger
- * /api/cart/items/{id}:
+ * /api/cart/{itemId}:
  *   put:
- *     summary: Update the quantity of a cart item
+ *     summary: Update cart item quantity
  *     tags: [Cart]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: itemId
  *         required: true
  *         schema:
- *           type: integer
- *         description: The cart item ID.
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - quantity
  *             properties:
  *               quantity:
  *                 type: integer
- *                 example: 3
+ *                 minimum: 1
  *     responses:
  *       200:
- *         description: Cart item updated successfully.
+ *         description: Cart item updated
  */
-router.put('/items/:id', authMiddleware, cartController.updateCartItem);
+router.put("/:itemId", updateCartItem);
 
 /**
  * @swagger
- * /api/cart/items/{id}:
+ * /api/cart/{itemId}:
  *   delete:
- *     summary: Remove a cart item
+ *     summary: Remove item from cart
  *     tags: [Cart]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: itemId
  *         required: true
  *         schema:
- *           type: integer
- *         description: The cart item ID.
+ *           type: string
  *     responses:
  *       200:
- *         description: Item removed from cart successfully.
+ *         description: Item removed from cart
  */
-router.delete('/items/:id', authMiddleware, cartController.removeCartItem);
+router.delete("/:itemId", removeCartItem);
 
 /**
  * @swagger
- * /api/cart/clear:
+ * /api/cart:
  *   delete:
- *     summary: Clear the current user's cart
+ *     summary: Clear cart
  *     tags: [Cart]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Cart cleared successfully.
+ *         description: Cart cleared
  */
-router.delete('/clear', authMiddleware, cartController.clearCart);
+router.delete("/", clearCart);
 
 module.exports = router;
