@@ -4,8 +4,6 @@ const User = require("./User");
 const Product = require("./Product");
 const Category = require("./Category");
 const Notification = require("./Notification");
-
-<<<<<<< HEAD
 // Define ServiceUsage model for billing by the minute
 const ServiceUsage = sequelize.define("ServiceUsage", {
   id: {
