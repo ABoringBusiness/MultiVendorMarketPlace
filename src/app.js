@@ -13,6 +13,9 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const auctionRoutes = require("./routes/auctionRoutes");
 const bidRoutes = require("./routes/bidRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
+const pennyAuctionRoutes = require("./routes/pennyAuctionRoutes");
+const pennyBidRoutes = require("./routes/pennyBidRoutes");
+const bidPackageRoutes = require("./routes/bidPackageRoutes");
 
 const app = express();
 
@@ -24,7 +27,7 @@ app.use(cors({
 
 // Parse JSON requests, but keep raw body for Stripe webhooks
 app.use((req, res, next) => {
-  if (req.originalUrl === '/api/payments/webhook') {
+  if (req.originalUrl === '/api/payments/webhook' || req.originalUrl === '/api/bid-packages/webhook') {
     next();
   } else {
     express.json()(req, res, next);
@@ -43,6 +46,9 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/auctions", auctionRoutes);
 app.use("/api/bids", bidRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/penny-auctions", pennyAuctionRoutes);
+app.use("/api/penny-bids", pennyBidRoutes);
+app.use("/api/bid-packages", bidPackageRoutes);
 
 // Swagger Docs
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
