@@ -1,0 +1,158 @@
+/* Notification Bell Styles */
+.notification-bell {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-bell button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #333;
+  padding: 0.5rem;
+  position: relative;
+}
+
+.notification-bell .badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #ff4757;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Notification Dropdown */
+.notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 350px;
+  max-height: 500px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.notification-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.notification-header button {
+  background: none;
+  border: none;
+  color: #2196f3;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.notification-list {
+  overflow-y: auto;
+  max-height: 450px;
+}
+
+.notification-item {
+  display: flex;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+  background-color: #f9f9f9;
+}
+
+.notification-item.unread {
+  background-color: #f0f8ff;
+}
+
+.notification-item.unread:hover {
+  background-color: #e6f4ff;
+}
+
+.notification-icon {
+  margin-right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f1f2f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-icon i {
+  font-size: 1.2rem;
+  color: #2196f3;
+}
+
+.notification-icon i.fa-shopping-cart {
+  color: #2196f3;
+}
+
+.notification-icon i.fa-gavel {
+  color: #9c27b0;
+}
+
+.notification-icon i.fa-money {
+  color: #4caf50;
+}
+
+.notification-icon i.fa-credit-card {
+  color: #ff9800;
+}
+
+.notification-icon i.fa-cog {
+  color: #607d8b;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.notification-content p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.notification-time {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: #999;
+  font-size: 0.9rem;
+}

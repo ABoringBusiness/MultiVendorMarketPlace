@@ -16,6 +16,7 @@ const serviceRoutes = require("./routes/serviceRoutes");
 const pennyAuctionRoutes = require("./routes/pennyAuctionRoutes");
 const pennyBidRoutes = require("./routes/pennyBidRoutes");
 const bidPackageRoutes = require("./routes/bidPackageRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/penny-auctions", pennyAuctionRoutes);
 app.use("/api/penny-bids", pennyBidRoutes);
 app.use("/api/bid-packages", bidPackageRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Swagger Docs
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
