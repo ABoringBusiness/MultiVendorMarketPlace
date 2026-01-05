@@ -1,1 +1,7 @@
 node_modules
+.env
+*.log
+
+# Convex
+convex/_generated/
+.convex/

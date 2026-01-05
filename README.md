@@ -2,10 +2,12 @@
 
 This is a **multi-vendor marketplace Backend** built with **Node.js, Express, and Sequelize**. The platform allows **sellers** to upload and manage products, while **buyers** can purchase, review, and rate them. **Admins** have full control over users, products, and orders. The platform also includes an auction system and service billing by the minute.
 
+**🔄 Migration in Progress:** This project is being migrated to Convex for improved real-time capabilities and modern backend infrastructure. See [CONVEX_MIGRATION.md](./CONVEX_MIGRATION.md) for details.
+
 ## 🚀 **Tech Stack**
 - **Backend:** Node.js, Express.js
-- **Database:** PostgreSQL with Sequelize ORM (Supabase)
-- **Authentication:** JWT
+- **Database:** PostgreSQL with Sequelize ORM (Supabase) + **Convex (NEW)**
+- **Authentication:** JWT + **Convex Auth (NEW)**
 - **API Documentation:** Swagger
 - **Payment Gateway:** Stripe
 - **Containerization:** Docker, Docker Compose
@@ -15,6 +17,18 @@ This is a **multi-vendor marketplace Backend** built with **Node.js, Express, an
 ## 📂 **Project Structure**
 ```
 marketplace-api/
+│── convex/              # Convex backend (NEW)
+│   ├── schema.ts        # Database schema
+│   ├── auth.ts          # Authentication
+│   ├── products.ts      # Product operations
+│   ├── orders.ts        # Order management
+│   ├── cart.ts          # Shopping cart
+│   ├── categories.ts    # Categories
+│   ├── reviews.ts       # Reviews
+│   ├── notifications.ts # Notifications
+│   ├── users.ts         # User/vendor queries
+│   ├── _helpers/        # Helper functions
+│   └── _migration/      # Data migration utilities
 │── src/
 │   ├── config/         # Database configuration
 │   ├── controllers/    # API controllers
@@ -26,6 +40,7 @@ marketplace-api/
 │   ├── app.js          # Express app setup
 │── .env                # Environment variables
 │── README.md           # Documentation
+│── CONVEX_MIGRATION.md # Convex migration guide
 │── package.json        # Node dependencies
 │── server.js           # Server entry point
 ```
@@ -105,7 +120,7 @@ npm install
 ```
 
 #### 3️⃣ Set up environment variables
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (see `.env.example`):
 ```
 PORT=5000
 DATABASE_URL=postgresql://postgres:password@localhost:5432/marketplace
@@ -114,9 +129,20 @@ NODE_ENV=development
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 CLIENT_URL=http://localhost:5000
+
+# Convex (NEW - Optional for now)
+CONVEX_DEPLOYMENT=your_convex_deployment_url
+CONVEX_DEPLOY_KEY=your_convex_deploy_key
 ```
 
-#### 4️⃣ Start the server
+#### 4️⃣ (Optional) Initialize Convex
+To use the new Convex backend:
+```bash
+npx convex dev
+```
+This will create a Convex project and start the development server.
+
+#### 5️⃣ Start the server
 ```bash
 npm start
 ```
@@ -237,6 +263,40 @@ https://localhost/api/docs
 - `GET /api/bid-packages/balance` - Get user's bid balance
 - `GET /api/bid-packages/transactions` - Get user's bid transactions
 - `POST /api/bid-packages/add-free-bids` - Add free bids to user (admin)
+
+## 🔄 Convex Backend (NEW)
+
+A new Convex backend has been implemented alongside the existing Express API. This provides:
+- Real-time database with automatic subscriptions
+- Modern TypeScript-first API
+- Built-in authentication
+- Better developer experience
+
+### Convex Functions
+
+All core marketplace features are available as Convex functions. See [CONVEX_MIGRATION.md](./CONVEX_MIGRATION.md) for complete documentation.
+
+**Key modules:**
+- `convex/auth.ts` - Authentication (sign up, sign in, profile)
+- `convex/products.ts` - Product CRUD operations
+- `convex/orders.ts` - Order management
+- `convex/cart.ts` - Shopping cart
+- `convex/categories.ts` - Category management
+- `convex/reviews.ts` - Review system
+- `convex/notifications.ts` - Notifications
+- `convex/users.ts` - User/vendor queries
+
+### Using Convex
+
+```bash
+# Start Convex development server
+npm run convex:dev
+
+# Deploy to production
+npm run convex:deploy
+```
+
+For detailed usage, see [CONVEX_MIGRATION.md](./CONVEX_MIGRATION.md).
 
 ## 🎯 Next Features
 - ✅ Admin Dashboard with Analytics
