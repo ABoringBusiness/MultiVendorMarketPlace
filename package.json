@@ -37,6 +37,7 @@
     "dev": "nodemon server.js",
     "test": "jest --forceExit --detectOpenHandles",
     "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy"
+    "convex:deploy": "convex deploy",
+    "migrate:convex": "node scripts/migrate-to-convex.js"
   }
 }
