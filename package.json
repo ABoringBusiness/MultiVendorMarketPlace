@@ -39,6 +39,7 @@
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
     "migrate:convex": "node scripts/migrate-to-convex.js",
+    "deploy:rapid": "bash scripts/rapid-deploy.sh",
     "verify:migration": "node scripts/verify-migration.js",
     "cleanup:legacy": "node scripts/cleanup-legacy.js"
   }
